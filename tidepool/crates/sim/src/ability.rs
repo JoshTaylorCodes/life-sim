@@ -4,7 +4,6 @@
 use crate::bite::side;
 use crate::control::CAUSE_POISONED;
 use crate::creature;
-use crate::genome::REF_WIDTH;
 use crate::params::id;
 use crate::pool::Slots;
 use crate::snapshot::{LoadError, Reader, Writer};
@@ -54,8 +53,9 @@ fn pay(cost: f32, energy: &mut f32) -> bool {
 
 /// Dash and toxin, after `control::apply` and before `motor::step`. Each live slot in ascending
 /// order counts its cooldowns and `strike_left` down by 1, then tries a dash and a cloud in that
-/// order. An ability fires with its part, its command above 0, its cooldown at 0, and its cost of
-/// `*_cost * area / REF_WIDTH` paid. It sets its cooldown to `ability_cooldown`. A dash of a body
+/// order. An ability fires with its part, its command above 0, its cooldown at 0, and its cost paid:
+/// `dash_cost` times the forward flagellum, or `toxin_cost` times the gland. A body's area does not
+/// change a cost. It sets its cooldown to `ability_cooldown`. A dash of a body
 /// with a jaw is a strike: its bite is `strike_bite` times for `strike_ticks` ticks. A cloud needs a
 /// free place in the pool: a full pool fires nothing and charges nothing. The motor holds the speed
 /// limit after this, so a dash cannot pass it.
@@ -92,7 +92,7 @@ pub fn step(world: &mut World) {
         if flag > 0.0
             && c.cmd_dash[s] > 0.0
             && c.cd_dash[s] == 0
-            && pay(dash_cost * c.area(s) / REF_WIDTH, &mut c.energy[s])
+            && pay(dash_cost * flag, &mut c.energy[s])
         {
             let heft = creature::heft(c.part_sum(s, eye_cost), part_mass);
             let gain = dash_impulse * flag / heft;
@@ -109,7 +109,7 @@ pub fn step(world: &mut World) {
             && c.cmd_toxin[s] > 0.0
             && c.cd_toxin[s] == 0
             && clouds.slots.count() < MAX_CLOUDS
-            && pay(toxin_cost * c.area(s) / REF_WIDTH, &mut c.energy[s])
+            && pay(toxin_cost * gland, &mut c.energy[s])
         {
             let k = clouds.slots.alloc().expect("the pool has room") as usize;
             (clouds.x[k], clouds.y[k]) = (c.x[s], c.y[s]);
