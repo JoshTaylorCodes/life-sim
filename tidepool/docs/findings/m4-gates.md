@@ -8,7 +8,7 @@ good rows. The orchestrator runs every row, one at a time.
 
 ## The Start flags of stage 1
 
-Every default is still Off. The Start values of groups 1 to 4 of Task 12 part 1, written out:
+Every default is still Off. The Start values of groups 1 to 4 of Task 12 part 1, written out: (Since #1679, 2026-11-16, `dash_cost` and `toxin_cost` are per unit of part size, not per body area: 0.5 here was 6 for a founder, which is `dash_cost` 10 now.)
 
 ```
 --param corpse_share=0.5 --param bite_rate=0.5 --param bite_mass_ratio=1.15 --param founder_jaw=0.2 --param starter_chase=1.5 --param starter_lunge=2.0 --param spike_hurt=1.0 --param shell_block=1.0 --param shell_drag=0.05 --param dash_impulse=2.0 --param dash_spin=0.3 --param dash_cost=0.5 --param lunge_impulse=2.0 --param lunge_bite=2.0 --param lunge_cost=0.5 --param starter_flee=2.0

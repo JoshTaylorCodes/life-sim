@@ -244,8 +244,8 @@ table! {
     DASH_IMPULSE "dash_impulse" 2.0 0.0 8.0;
     /// Spin gained per unit of turn command per unit of rear flagellum, over heft.
     DASH_SPIN "dash_spin" 0.3 0.0 2.0;
-    /// Energy per unit of mouth for one dash.
-    DASH_COST "dash_cost" 0.5 0.0 5.0;
+    /// Energy per unit of rear (pushing) flagellum for one dash.
+    DASH_COST "dash_cost" 10.0 0.0 50.0;
     /// Bite multiplier of a body with a jaw during its dash: a strike.
     STRIKE_BITE "strike_bite" 2.0 1.0 4.0;
     /// Ticks that a strike's bite lasts.
@@ -256,8 +256,8 @@ table! {
     TOXIN_RADIUS "toxin_radius" 2.0 0.5 8.0;
     /// Ticks a cloud lasts.
     TOXIN_TICKS "toxin_ticks" 60.0 1.0 600.0;
-    /// Energy per unit of mouth for one cloud.
-    TOXIN_COST "toxin_cost" 2.0 0.0 10.0;
+    /// Energy per unit of gland for one cloud.
+    TOXIN_COST "toxin_cost" 48.0 0.0 200.0;
     /// Scale of the hurt input: a loss of a tenth of capacity reads 1.
     HURT_GAIN "hurt_gain" 10.0 0.0 100.0;
     /// Share of founders with a Jaw.

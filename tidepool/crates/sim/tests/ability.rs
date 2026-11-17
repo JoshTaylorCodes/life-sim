@@ -4,9 +4,7 @@
 use tidepool_sim::ability::{self, MAX_CLOUDS};
 use tidepool_sim::brain::OUT_DASH;
 use tidepool_sim::control::{self, ABILITY_DASH, ABILITY_TOXIN, CAUSE_POISONED};
-use tidepool_sim::genome::{
-    Genome, Node, OutGene, KIND_FLAGELLUM, KIND_JAW, KIND_TOXIN, REF_WIDTH,
-};
+use tidepool_sim::genome::{Genome, Node, OutGene, KIND_FLAGELLUM, KIND_JAW, KIND_TOXIN};
 use tidepool_sim::params::id;
 use tidepool_sim::world::{SpawnAt, World};
 
@@ -49,8 +47,71 @@ fn heft(w: &World, s: usize) -> f32 {
     c.mass(s, p.get(id::PART_MASS), p.get(id::EYE_COST)) / c.area(s)
 }
 
-fn mouth(w: &World, s: usize) -> f32 {
-    w.creatures.area(s) / REF_WIDTH
+/// The energy that one dash of the genome costs, and the area of the body.
+fn dash_cost(g: Genome) -> (f32, f32) {
+    let mut w = one(g, 0.0);
+    dash_on(&mut w);
+    w.creatures.cmd_dash[0] = 1.0;
+    let e0 = w.creatures.energy[0];
+    ability::step(&mut w);
+    assert!(w.creatures.cd_dash[0] > 0, "the dash did not fire");
+    (e0 - w.creatures.energy[0], w.creatures.area(0))
+}
+
+/// The energy that one cloud of the genome costs, and the area of the body.
+fn toxin_cost(g: Genome) -> (f32, f32) {
+    let mut w = one(g, 0.0);
+    toxin_on(&mut w);
+    w.creatures.cmd_toxin[0] = 1.0;
+    let e0 = w.creatures.energy[0];
+    ability::step(&mut w);
+    assert!(w.creatures.cd_toxin[0] > 0, "the cloud did not fire");
+    (e0 - w.creatures.energy[0], w.creatures.area(0))
+}
+
+fn with_flagellum(size: f32) -> Genome {
+    let mut g = genome(0.0, 0.0);
+    g.set_size(KIND_FLAGELLUM, size);
+    g
+}
+
+#[test]
+fn a_larger_flagellum_makes_a_dash_cost_more_at_the_same_area() {
+    let ((small, a), (large, b)) = (
+        dash_cost(with_flagellum(0.4)),
+        dash_cost(with_flagellum(0.8)),
+    );
+    assert_eq!(a, b);
+    assert!(large > small, "dash cost {small} then {large}");
+}
+
+#[test]
+fn a_larger_gland_makes_a_cloud_cost_more_at_the_same_area() {
+    let ((small, a), (large, b)) = (toxin_cost(genome(0.0, 0.3)), toxin_cost(genome(0.0, 0.6)));
+    assert_eq!(a, b);
+    assert!(large > small, "cloud cost {small} then {large}");
+}
+
+#[test]
+fn body_area_alone_does_not_change_what_an_ability_costs() {
+    let sized = |len: f32, wid: f32| {
+        let mut g = genome(0.0, 0.5);
+        (g.len, g.wid) = (len, wid);
+        g
+    };
+    let (dash_a, area_a) = dash_cost(sized(8.0, 0.4));
+    let (dash_b, area_b) = dash_cost(sized(20.0, 0.8));
+    assert!(area_b > 3.0 * area_a, "areas {area_a} and {area_b}");
+    assert!(
+        (dash_a - dash_b).abs() < 1e-4,
+        "dash cost {dash_a} then {dash_b}"
+    );
+    let (toxin_a, _) = toxin_cost(sized(8.0, 0.4));
+    let (toxin_b, _) = toxin_cost(sized(20.0, 0.8));
+    assert!(
+        (toxin_a - toxin_b).abs() < 1e-4,
+        "cloud cost {toxin_a} then {toxin_b}"
+    );
 }
 
 fn dash_on(w: &mut World) {
@@ -88,7 +149,7 @@ fn a_dash_waits_out_its_cooldown_and_costs_energy() {
     dash_on(&mut w);
     w.params.set(id::ABILITY_COOLDOWN, 30.0);
     w.creatures.cmd_dash[0] = 1.0;
-    let (e0, cost) = (w.creatures.energy[0], 0.5 * mouth(&w, 0));
+    let (e0, cost) = (w.creatures.energy[0], 0.5 * w.creatures.flag_push[0]);
     ability::step(&mut w);
     let (v1, e1) = (w.creatures.vx[0], w.creatures.energy[0]);
     assert!(v1 > 0.0);
@@ -108,7 +169,7 @@ fn a_dash_waits_out_its_cooldown_and_costs_energy() {
 fn a_body_that_cannot_pay_does_not_dash() {
     let mut w = one(genome(0.0, 0.0), 0.0);
     dash_on(&mut w);
-    let cost = 0.5 * mouth(&w, 0);
+    let cost = 0.5 * w.creatures.flag_push[0];
     // `energy - cost` is 0, not above it.
     (w.creatures.cmd_dash[0], w.creatures.energy[0]) = (1.0, cost);
     ability::step(&mut w);
@@ -165,7 +226,7 @@ fn a_dash_of_a_body_with_a_jaw_strikes_for_strike_ticks() {
 
     let mut w = one(genome(0.5, 0.0), 0.0);
     dash(&mut w);
-    let (e0, cost) = (w.creatures.energy[0], 0.5 * mouth(&w, 0));
+    let (e0, cost) = (w.creatures.energy[0], 0.5 * w.creatures.flag_push[0]);
     ability::step(&mut w);
     let c = &w.creatures;
     let push = 2.0 * c.flag_push[0] / heft(&w, 0);
@@ -235,7 +296,7 @@ fn a_cloud_hit_counts_as_hurt_from_the_side_of_the_cloud() {
 #[test]
 fn a_cloud_drains_others_but_not_its_maker_and_the_energy_is_gone() {
     let mut w = cloud_world();
-    let (e0, cost) = (w.creatures.energy[0], 2.0 * mouth(&w, 0));
+    let (e0, cost) = (w.creatures.energy[0], 2.0 * w.creatures.gland_sum[0]);
     ability::step(&mut w);
     assert!((e0 - w.creatures.energy[0] - cost).abs() < 1e-5);
     assert_eq!(w.creatures.cd_toxin[0], 100);
