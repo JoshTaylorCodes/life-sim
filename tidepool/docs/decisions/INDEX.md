@@ -385,6 +385,11 @@ Decisions that are hard to reverse. One line each, with where the reasoning live
 - 2026-11-16: **A phone that cannot hold real time runs the same world slower and says so (the
   owner's grill, round 3).** One world and one set of rules on every device; not a smaller world, not
   a still. Measured on the owner's Pixel before any change. → `../roadmap.md` "Ship slice"
+- 2026-11-17: **The takeover rules ship on with T8's set, owner to confirm: `interference` 0.3 at
+  `interference_radius` 16, `jaw_filter_cost` 0.03.** No trial of eight met the target. With a rule
+  on, 2 of 35 seed-runs kept carnivores at 0.10 or more, against 3 of 5 with both off. O1 cut the
+  carnivores at every dose read (0.1 to 1.0), so it ships at a token dose and its deletion is the
+  owner's. → `../findings/takeover-rules.md`
 
 ## Architecture
 
