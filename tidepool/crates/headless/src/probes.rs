@@ -1024,6 +1024,7 @@ fn turn_world(params: &[(usize, f32)], grip: f32, body: &str) -> (World, usize) 
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
     ] {
         p.set(k, 0.0);
     }

@@ -106,6 +106,9 @@ table! {
     CONN_UPKEEP "conn_upkeep" 0.00005 0.0 0.01;
     /// Cost of thrust.
     MOVE_COST "move_cost" 0.006 0.0 1.0;
+    /// Cost of turning, rule 2 of the parts audit: like `move_cost`, for the turn command squared
+    /// times the steering of the body (`motor::steer`) times its mouth (`area / REF_WIDTH`). 0: off.
+    TURN_COST "turn_cost" 0.003 0.0 1.0;
     /// Energy per tick per unit filter per unit of mouth. The mouth follows the area:
     /// `area / REF_WIDTH`, which is the length for the reference body.
     INTAKE_RATE "intake_rate" 0.08 0.0 1.0;

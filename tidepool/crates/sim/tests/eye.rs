@@ -38,6 +38,7 @@ fn world(seed: u32) -> World {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
         id::INTAKE_RATE,
         id::SCENT_DEPOSIT,
     ] {

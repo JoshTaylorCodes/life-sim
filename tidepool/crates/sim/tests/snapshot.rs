@@ -1300,6 +1300,15 @@ fn another_format_version_is_rejected() {
     );
 }
 
+/// `fixtures/format-12.tdpl` is a world that the build of format 12 saved, before `turn_cost` joined
+/// the parameter table. Keep it: it is the proof that a snapshot of an older layout is refused with
+/// its version, and not read as a world of this one.
+#[test]
+fn a_snapshot_of_format_12_is_rejected_by_its_version() {
+    let old = include_bytes!("fixtures/format-12.tdpl");
+    assert_eq!(World::load(old).err(), Some(LoadError::BadVersion(12)));
+}
+
 /// `load` does not check creature values or the floats of a genome. The tick and every read of the
 /// world must survive any of them.
 #[test]

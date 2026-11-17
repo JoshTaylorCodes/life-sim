@@ -625,10 +625,12 @@ test('picking an heir resumes the world in that body', () => {
     { name: 'bud_at', value: 0.2 },
     { name: 'bud_cooldown', value: 0 },
     { name: 'lifespan', value: 1200 },
-    ...['basal', 'fixed_upkeep', 'neuron_upkeep', 'conn_upkeep', 'move_cost'].map((name) => ({
-      name,
-      value: 0,
-    })),
+    ...['basal', 'fixed_upkeep', 'neuron_upkeep', 'conn_upkeep', 'move_cost', 'turn_cost'].map(
+      (name) => ({
+        name,
+        value: 0,
+      }),
+    ),
   ];
   r.host.handle({ type: 'init', seed: 1, params });
   r.host.handle({ type: 'possess', uid: 88 });

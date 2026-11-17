@@ -75,6 +75,7 @@ fn no_upkeep(w: &mut World) {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
     ] {
         w.params.set(k, 0.0);
     }
@@ -724,4 +725,94 @@ fn thrust_costs_the_same_per_unit_of_mass() {
         (small / large - 1.0).abs() < 0.02,
         "{small} against {large}"
     );
+}
+
+/// A lone adult with no plants, held at `turn` and no thrust by the player. `side` moves its
+/// flagellum to the middle of the body, where it turns the body and does not push.
+fn energy_after_turning(turn_cost: f32, turn: f32, side: bool, ticks: u32) -> f32 {
+    let mut w = empty();
+    w.params.set(id::TURN_COST, turn_cost);
+    let c = add(&mut w, 500.0, 1.0, 0.9, |g| {
+        if side {
+            let flagella = g.parts.iter_mut().filter(|p| p.kind == KIND_FLAGELLUM);
+            flagella.for_each(|p| p.anchor = 0.5);
+        }
+    });
+    assert!(w.possess(w.creatures.uid[c]));
+    w.input(true, 0.0, turn, false, 0);
+    w.run(ticks);
+    w.creatures.energy[c]
+}
+
+/// Turning costs `turn_cost * turn^2 * steer * 12` per tick. The body of `add` has cilia 0.4 and an
+/// adult length of 12. Its flagellum is at the tail, so only the cilia turn it at rest. With the
+/// flagellum at the middle, its 0.6 turns the body too. Half a turn costs a quarter of a full one.
+#[test]
+fn turning_costs_energy_by_the_square_of_the_command() {
+    const TICKS: u32 = 100;
+    const TURN_COST: f32 = 0.01;
+    let p = empty().params.clone();
+    let cilia = p.get(id::CILIA_TORQUE) * 0.4;
+    let side = cilia + p.get(id::FLAG_TORQUE) * 0.6;
+    for (flagellum_at_middle, steer) in [(false, cilia), (true, side)] {
+        for turn in [1.0, 0.5] {
+            let still = energy_after_turning(TURN_COST, 0.0, flagellum_at_middle, TICKS);
+            let turning = energy_after_turning(TURN_COST, turn, flagellum_at_middle, TICKS);
+            let cost = TURN_COST * turn * turn * steer * 12.0 * TICKS as f32;
+            assert!(cost > 0.5, "the expected cost {cost} is too small to test");
+            assert!(
+                (still - turning - cost).abs() < 1e-2,
+                "middle {flagellum_at_middle}, turn {turn}: cost {}, expected {cost}",
+                still - turning
+            );
+        }
+    }
+}
+
+#[test]
+fn turning_costs_energy_at_the_default_turn_cost() {
+    let default_cost = empty().params.get(id::TURN_COST);
+    assert!(default_cost > 0.0);
+    let (still, turning) = (
+        energy_after_turning(default_cost, 0.0, false, 100),
+        energy_after_turning(default_cost, 1.0, false, 100),
+    );
+    assert!(turning < still, "{turning} against {still}");
+}
+
+#[test]
+fn at_turn_cost_0_a_turning_body_and_a_still_one_end_equal() {
+    for side in [false, true] {
+        assert_eq!(
+            energy_after_turning(0.0, 0.0, side, 100),
+            energy_after_turning(0.0, 1.0, side, 100)
+        );
+    }
+}
+
+/// A fin turns with the water that passes it, and the motor reads the swim from before the tick.
+/// Drag has cut the speed by the end of the tick, so the fin is charged for the swim of 2 that
+/// turned it, not for the swim that is left.
+#[test]
+fn a_fin_pays_for_the_swim_that_turned_it() {
+    const TURN_COST: f32 = 0.5;
+    let energy_after = |turn: f32| {
+        let mut w = empty();
+        w.params.set(id::TURN_COST, TURN_COST);
+        let c = add(&mut w, 500.0, 1.0, 0.9, |g| {
+            g.set_size(KIND_CILIA, 0.0);
+            g.set_size(KIND_FIN, 0.5);
+        });
+        w.creatures.vx[c] = 2.0;
+        assert!(w.possess(w.creatures.uid[c]));
+        w.input(true, 0.0, turn, false, 0);
+        w.run(1);
+        w.creatures.energy[c]
+    };
+    let p = empty().params.clone();
+    let steer = p.get(id::FIN_TORQUE) / p.get(id::V_MAX) * 0.5 * 2.0;
+    let cost = TURN_COST * steer * 12.0;
+    assert!(cost > 0.5, "the expected cost {cost} is too small to test");
+    let paid = energy_after(0.0) - energy_after(1.0);
+    assert!((paid - cost).abs() < 1e-3, "paid {paid}, expected {cost}");
 }

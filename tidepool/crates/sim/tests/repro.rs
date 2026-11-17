@@ -60,6 +60,7 @@ fn quiet(w: &mut World) {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
         id::FLAG_FORCE,
         id::CILIA_FORCE,
     ] {

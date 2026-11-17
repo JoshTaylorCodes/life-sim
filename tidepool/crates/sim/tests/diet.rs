@@ -16,6 +16,7 @@ fn still_water() -> World {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
         id::REPEL,
         id::FLAG_FORCE,
         id::CILIA_FORCE,
