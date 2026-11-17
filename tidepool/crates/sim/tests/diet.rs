@@ -252,3 +252,40 @@ fn a_spike_hurts_a_biter_in_step_with_its_bite() {
         "{half} / {full}"
     );
 }
+
+/// What a jawed biter of diet `biter` and length `biter_len` takes in one tick from a jawless body of
+/// diet `prey` and length `prey_len`, at a gap of 0.25 and a `bite_mass_ratio` of 1.15.
+fn top_bite(biter: f32, biter_len: f32, prey: f32, prey_len: f32) -> f32 {
+    let mut w = still_water();
+    w.params.set(id::DIET_K, 0.0);
+    w.params.set(id::BITE_DIET_GAP, 0.25);
+    w.params.set(id::BITE_MASS_RATIO, 1.15);
+    adult_shaped(&mut w, 100.0, biter, |g| {
+        g.set_size(KIND_JAW, 0.5);
+        g.len = biter_len;
+    });
+    adult_shaped(&mut w, 108.0, prey, |g| g.len = prey_len);
+    w.tick();
+    w.stats.flesh as f32
+}
+
+#[test]
+fn a_large_biter_at_the_top_of_diet_bites_a_smaller_body_near_the_top() {
+    // Under a gap of 0.25 nothing is over 1, so before the top rule a body over 0.75 was immune.
+    assert!(top_bite(1.0, 24.0, 0.9, 12.0) > 0.0);
+    assert!(top_bite(0.9, 24.0, 1.0, 12.0) > 0.0);
+}
+
+#[test]
+fn a_biter_that_fails_the_mass_ratio_cannot_bite_near_the_top() {
+    assert_eq!(top_bite(1.0, 12.0, 0.9, 24.0), 0.0);
+}
+
+#[test]
+fn below_the_top_a_biter_needs_the_gap_as_before() {
+    // 0.8 + 0.25 is over 1, but a body of 0.6 is not within the gap of the top.
+    assert_eq!(top_bite(0.8, 24.0, 0.6, 12.0), 0.0);
+    // A biter of 0.7 is too low for the top rule and bites 0.45 by the gap alone.
+    assert!(top_bite(0.7, 24.0, 0.45, 12.0) > 0.0);
+    assert_eq!(top_bite(0.7, 24.0, 0.5, 12.0), 0.0);
+}

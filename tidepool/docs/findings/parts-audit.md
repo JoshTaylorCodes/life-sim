@@ -50,6 +50,8 @@ the outputs thrust, turn, and accept are free; only the wires that use them cost
 5. **The food chain makes meat eaters over `diet` 0.75 immune to every bite** (rule D2, the gap 0.25:
    a biter needs a diet 0.25 higher, and none is over 1). Apex predators with no predator but toxin. It bears on the shape: carnivores can only be
    thinned by hunger. Fix, if wanted: let the mass ratio alone guard the top of the chain.
+   **Fixed (#1680):** a biter whose diet plus the gap is over 1 also bites a body over 1 minus the
+   gap. Below the top the chain is unchanged.
 6. **Spike and shell are not even.** A spike hurts by the bite even when a shell blocked all of it
    (`bite.rs`), and a shell's drag keeps rising after its block stops at 1 (`motor.rs`). Fix: hurt by
    what was taken; clamp the shell's size.
