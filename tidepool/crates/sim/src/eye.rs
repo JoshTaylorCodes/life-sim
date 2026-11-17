@@ -43,7 +43,7 @@ pub fn see(world: &mut World, slot: usize) {
     if in_eye == NO_INPUT {
         return;
     }
-    let (eye_range, gain) = (params.get(id::EYE_RANGE), params.get(id::EYE_GAIN));
+    let gain = params.get(id::EYE_GAIN);
     let (px, py, hc, hs) = (c.x[slot], c.y[slot], c.hc[slot], c.hs[slot]);
     let n = (c.n_eyes[slot] as usize).min(MAX_EYES);
     // Of each cone: its axis and the squared cosine of its half angle, and its squared range.
@@ -58,7 +58,7 @@ pub fn see(world: &mut World, slot: usize) {
         let (sin_dir, cos_dir) = (c.eye_ay[eye], c.eye_ax[eye]);
         let (ax, ay) = (hc * cos_dir - hs * sin_dir, hs * cos_dir + hc * sin_dir);
         let cos = c.eye_cos[eye];
-        let range = c.cone_range(slot, k, eye_range);
+        let range = c.cone_range(slot, k, params);
         cones[k] = [ax, ay, cos * cos];
         far2[k] = range * range;
         // A cone goes farthest along a line where that line is inside it, and at one of its two

@@ -180,6 +180,10 @@ table! {
     FOUNDER_EYE "founder_eye" 0.4 0.0 1.0;
     /// Cone range in body lengths per unit eye size.
     EYE_RANGE "eye_range" 16.0 0.0 64.0;
+    /// Range lost per radian of cone half angle past the founder's 0.7, as a share of the range.
+    /// At 1 a cone of half angle 1.2 sees half as far as the founder's and one of 0.2 sees 1.5 times
+    /// as far. At 2 the widest cone sees nothing.
+    EYE_TRADE "eye_trade" 1.0 0.0 2.0;
     /// Scale of the eye inputs.
     EYE_GAIN "eye_gain" 1.0 0.0 10.0;
     /// Eyes scan on every Nth think.

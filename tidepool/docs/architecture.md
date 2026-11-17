@@ -177,7 +177,9 @@ native binary is dropped. M0 answers this.
   (`motor.rs`).
 - An Eye makes one cone on the midline and two elsewhere, at most `MAX_EYES` (8) cones on a body.
   Genes past that still cost their size. The half angle is `EYE_HALF_MIN + EYE_HALF_SPAN * extra`.
-  The range is `eye_range * size * length`, held to `EYE_REACH` (64). Each cone feeds two inputs of
+  The range is `eye_range * size * length * (1 + eye_trade * (0.7 - half angle))`, held to
+  `EYE_REACH` (64): a wide cone sees nearer than a narrow one, and a cone of the founder's half
+  angle 0.7 keeps `eye_range * size * length`. Each cone feeds two inputs of
   its own eye gene: the nearness of the nearest plant and of the nearest body in the cone, 1 at the
   eye and 0 at the range, times `eye_gain`. Nothing is summed over cones. A body scans on one think in
   `see_every` (`eye.rs`).

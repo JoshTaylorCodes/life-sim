@@ -330,6 +330,34 @@ fn a_larger_eye_and_a_longer_body_both_see_farther() {
     assert!(sees_plants(long, &far)[1] > 0.0);
 }
 
+/// The founder's eye with another cone width: `extra` 0 is the narrowest cone, 1 the widest.
+fn founder_eye_of_width(extra: f32) -> Genome {
+    let mut g = founder_eyed();
+    g.parts.last_mut().expect("the eye gene").extra = extra;
+    g
+}
+
+/// The founder's cone reaches 38.4 units. A narrow cone of the same size reaches 57.6 and a wide
+/// one 19.2, so a plant 30 units out on the axis of both is in the narrow cone only.
+#[test]
+fn a_wide_eye_sees_less_far_than_a_narrow_one_of_the_same_size() {
+    let plant_30 = [off(30.0, SIDE)];
+    let narrow = sees_plants(founder_eye_of_width(0.0), &plant_30)[1];
+    let wide = sees_plants(founder_eye_of_width(1.0), &plant_30)[1];
+    assert!(narrow > 0.0, "narrow {narrow}");
+    assert_eq!(wide, 0.0);
+    // Nearer than both ranges, both see it.
+    let plant_10 = [off(10.0, SIDE)];
+    assert!(sees_plants(founder_eye_of_width(1.0), &plant_10)[1] > 0.0);
+}
+
+/// A cone of the founder's width keeps the founder's range of 38.4, so a plant at half of it reads 0.5.
+#[test]
+fn a_founder_width_cone_keeps_the_founder_range() {
+    let near = sees_plants(founder_eye_of_width(FOUNDER_EYE_EXTRA), &[off(19.2, SIDE)])[1];
+    assert!((near - 0.5).abs() < 1e-3, "{near}");
+}
+
 /// A body with the founder's eye at half of its growth. Its cone is half as long as the adult's:
 /// 19.2 units, where the adult sees 38.4.
 #[test]
@@ -339,7 +367,7 @@ fn a_juvenile_sees_as_far_as_its_body_has_grown() {
         plant(&mut w, off(d, SIDE));
         let s = body(&mut w, founder_eyed(), AT);
         w.creatures.growth[s] = 0.5;
-        let range = w.creatures.cone_range(s, 0, w.params.get(id::EYE_RANGE));
+        let range = w.creatures.cone_range(s, 0, &w.params);
         assert!((range - RANGE / 2.0).abs() < 1e-4, "range {range}");
         seen(&mut w, s)[1]
     };
@@ -437,7 +465,7 @@ fn seen_by_search(w: &World, s: usize) -> Vec<f32> {
         let ax = c.hc[s] * cos_dir - c.hs[s] * sin_dir;
         let ay = c.hs[s] * cos_dir + c.hc[s] * sin_dir;
         let cos2 = c.eye_cos[eye] * c.eye_cos[eye];
-        let range = (w.params.get(id::EYE_RANGE) * c.eye_size[eye] * c.length(s)).min(EYE_REACH);
+        let range = c.cone_range(s, eye - s * MAX_EYES, &w.params);
         // The nearness of the nearest thing in the cone, and its slot.
         let near = |slots: &Slots, x: &[f32], y: &[f32]| {
             let (mut best, mut who) = (range * range, None);

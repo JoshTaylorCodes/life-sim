@@ -2,10 +2,11 @@
 
 use crate::eye::{EYE_HALF_MIN, EYE_HALF_SPAN, EYE_REACH};
 use crate::genome::{
-    Genome, KIND_CHEMO, KIND_CILIA, KIND_EYE, KIND_FILTER, KIND_FIN, KIND_FLAGELLUM, KIND_JAW,
-    KIND_SHELL, KIND_SPIKE, KIND_TOXIN, LEN_RANGE, REF_PARTS, WID_RANGE,
+    Genome, FOUNDER_EYE_EXTRA, KIND_CHEMO, KIND_CILIA, KIND_EYE, KIND_FILTER, KIND_FIN,
+    KIND_FLAGELLUM, KIND_JAW, KIND_SHELL, KIND_SPIKE, KIND_TOXIN, LEN_RANGE, REF_PARTS, WID_RANGE,
 };
 use crate::math::{sin_cos, PI};
+use crate::params::{id, Params};
 use crate::pool::Slots;
 use crate::snapshot::{LoadError, Reader, Writer};
 
@@ -91,14 +92,15 @@ pub struct Creatures {
     /// The sizes of every part that is not an eye, summed in gene order.
     pub plain_sum: Vec<f32>,
     pub eye_sum: Vec<f32>,
-    /// Eye cones, at most `MAX_EYES`. The five arrays below hold `MAX_EYES` values per slot.
+    /// Eye cones, at most `MAX_EYES`. The six arrays below hold `MAX_EYES` values per slot.
     pub n_eyes: Vec<u8>,
     /// Radians from the heading.
     pub eye_dir: Vec<f32>,
     /// The cosine and the sine of `eye_dir`: the axis of the cone for a body with heading 0.
     pub eye_ax: Vec<f32>,
     pub eye_ay: Vec<f32>,
-    /// The cosine of the half angle.
+    /// The half angle in radians, and its cosine.
+    pub eye_half: Vec<f32>,
     pub eye_cos: Vec<f32>,
     pub eye_size: Vec<f32>,
     /// The sum of the sizes of the jaw genes. A pair counts once.
@@ -178,6 +180,7 @@ impl Default for Creatures {
             eye_dir: vec![0.0; n * MAX_EYES],
             eye_ax: vec![0.0; n * MAX_EYES],
             eye_ay: vec![0.0; n * MAX_EYES],
+            eye_half: vec![0.0; n * MAX_EYES],
             eye_cos: vec![0.0; n * MAX_EYES],
             eye_size: vec![0.0; n * MAX_EYES],
             jaw_sum: floats(),
@@ -338,6 +341,7 @@ impl Creatures {
                             let k = s * MAX_EYES + cones;
                             self.eye_dir[k] = dir;
                             (self.eye_ay[k], self.eye_ax[k]) = sin_cos(dir);
+                            self.eye_half[k] = half;
                             self.eye_cos[k] = sin_cos(half).1;
                             self.eye_size[k] = size;
                             cones += 1;
@@ -374,10 +378,15 @@ impl Creatures {
     }
 
     /// How far cone `k` of the body sees, in world units: `eye_range * size * length` of the body
-    /// as it has grown, and at most `EYE_REACH`. `eye::see` scans this far and `frame::write` sends
-    /// this number to the page, so the cone that the player sees is the cone that the eye scans.
-    pub fn cone_range(&self, s: usize, k: usize, eye_range: f32) -> f32 {
-        (eye_range * self.eye_size[s * MAX_EYES + k] * self.length(s)).min(EYE_REACH)
+    /// as it has grown, times `1 + eye_trade * (founder half angle - half angle)`, and at most
+    /// `EYE_REACH`. A cone of the founder's width keeps the range above, a narrower one sees
+    /// farther and a wider one nearer. `eye::see` scans this far and `frame::write` sends this
+    /// number to the page, so the cone that the player sees is the cone that the eye scans.
+    pub fn cone_range(&self, s: usize, k: usize, params: &Params) -> f32 {
+        let eye = s * MAX_EYES + k;
+        let founder_half = EYE_HALF_MIN + EYE_HALF_SPAN * FOUNDER_EYE_EXTRA;
+        let width = 1.0 + params.get(id::EYE_TRADE) * (founder_half - self.eye_half[eye]);
+        (params.get(id::EYE_RANGE) * self.eye_size[eye] * self.length(s) * width).min(EYE_REACH)
     }
 
     /// The shell size that a body's drag counts. A shell side that faces within the arc of the line
