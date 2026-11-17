@@ -281,8 +281,8 @@ export function buildParts(
       const kind = word & 0xff;
       const reach = near || kind === KIND_FLAGELLUM ? REACH[kind] : undefined;
       const part = reach && unpackPart(word);
-      // A Filter of size 0 is shed: it does nothing, so it is not drawn.
-      if (!part || !reach || (part.kind === KIND_FILTER && part.size === 0)) continue;
+      // A part of size 0 does nothing, so it is not drawn.
+      if (!part || !reach || part.size === 0) continue;
       let phase = part.kind === KIND_FLAGELLUM ? (swum[slot] ?? 0) : ripple;
       if (part.kind === KIND_JAW) {
         if (((u32[r + C_FLAGS] ?? 0) & FLAG_BIT) !== 0) {

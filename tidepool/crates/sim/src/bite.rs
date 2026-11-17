@@ -37,9 +37,10 @@ pub(crate) fn side(y: f32) -> f32 {
 /// guards: if the diet of `s` plus the gap is over 1, `s` also bites a `j` of a diet over 1 minus
 /// the gap. The bite is `bite_rate` times the jaws that hold
 /// `j` times the mouth of `s` times `diet^diet_k` of `s` (rule D1 of the diet plan), and
-/// `strike_bite` times that during a strike. A spike hurts in proportion to that bite. The guards of `j` whose
-/// arc holds `s`, at the places of this tick after the motor, block a share of it (shells) and
-/// hurt `s` (spikes). What `j` loses `s` gains. What a spike hurts is lost.
+/// `strike_bite` times that during a strike. The guards of `j` whose arc holds `s`, at the places
+/// of this tick after the motor, block a share of it (shells). What `j` loses `s` gains. The guards
+/// that hold `s` also hurt it (spikes) in proportion to what the bite took, so a bite a shell
+/// blocked whole costs `s` nothing to a spike. What a spike hurts is lost.
 ///
 /// A body taken to 0 or less is killed after the loop, in slot order: a bitten body with
 /// `CAUSE_EATEN` and a biter with `CAUSE_SPIKED`, each killed by the other.
@@ -109,7 +110,7 @@ pub fn step(world: &mut World) {
         c.energy[j] -= take;
         c.energy[s] += take;
         stats.flesh += take as f64;
-        let hurt = spike_hurt * spike * bite;
+        let hurt = spike_hurt * spike * take;
         c.energy[s] -= hurt;
 
         c.hurt[j] += take;
