@@ -16,8 +16,8 @@ these runs are deterministic, so the load changes only the time). Full log:
 
 - `gate-health` 3/3 PASS.
 - `gate-evolve` 0/3: eye gap 0.020, −0.117, 0.022 against 0.10. Every other band passes.
-- Long gate 1/5 (seed 5 passes): eye gap 0.089, 0.068, 0.087, −0.062 on seeds 1, 4, 6, 8. Every
-  other band passes.
+- Long gate 1/5 (seed 4 passes): eye gap 0.089, 0.068, 0.087, −0.062 on seeds 1, 5, 6, 8. Every
+  other band passes. (Corrected 2026-11-17 by #1708: this line first named seed 5 as the pass.)
 
 `probe-diet` at 144,000 (herbivore under 0.3, carnivore over 0.7; hunter = a body with a jaw):
 
@@ -33,6 +33,28 @@ At 36,000 on seed 1, the age of the baked world: hunter share 0.899, herbivores 
 A jaw is near universal. "Hunter" (a jaw) no longer tells a hunter from prey in the shipped world.
 Against #1690's target (omnivores 0.50 or under, herbivores and carnivores 0.10 or more each,
 hunters never over 0.8 of the living): no seed meets the diet bands (seed 4 is nearest, carnivores 0.086) and no seed meets the hunter band.
+
+### The eye gap per seed, both heads (#1708)
+
+`eye` and `eye_blind` are the share of bodies with an eye in the world and in its blind arm, as the
+long gate prints them (two places). The gap is the gate's own figure where it failed; on a pass it
+is 0.10 or more, shown as the difference of the printed shares.
+
+| Seed | 144,000 at `76e3cc60` | Gap | 144,000 at `225720e6` | Gap |
+|---|---|---|---|---|
+| 1 | 0.12 / 0.04 | 0.089 FAIL | 0.19 / 0.01 | ≈0.18 (fails the chemo gap) |
+| 4 | 0.24 / 0.06 | ≈0.18 PASS | 0.33 / 0.02 | ≈0.31 PASS |
+| 5 | 0.11 / 0.04 | 0.068 FAIL | 0.06 / 0.04 | 0.027 FAIL |
+| 6 | 0.13 / 0.04 | 0.087 FAIL | 0.29 / 0.03 | ≈0.26 PASS |
+| 8 | 0.03 / 0.09 | −0.062 FAIL | 0.09 / 0.02 | 0.074 FAIL |
+
+At 36,000 (seeds 1 to 3): `76e3cc60` 0.020, −0.117, 0.022, all FAIL; `225720e6` ≈0.17, ≈0.13 PASS
+and 0.078 FAIL.
+
+**A change inside the batch that is not a fix:** `founder_eye` rose from 0.2 to 0.4 with #1677, so
+each cone of the founders' eye pair keeps its old size. The founder pays mass for both cones, so
+founder mass rises (the debris test's built mass went from 76.7 to 81.3). The batch reading
+includes it.
 
 ## Batch: `225720e6`
 
