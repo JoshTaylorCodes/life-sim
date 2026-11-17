@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from 'vitest';
+import { abilitiesOf } from '../src/app/input';
+import { bodyIn } from '../src/app/kin';
 import * as P from '../src/protocol';
 import { createSim, SimError } from '../src/worker/wasm';
+
+const { ABILITY_DASH } = P;
 
 const bytes = readFileSync(new URL('../src/wasm/tidepool_sim.wasm', import.meta.url));
 const module = new WebAssembly.Module(bytes);
@@ -197,7 +201,7 @@ test('a frame of the whole world holds every creature', () => {
     expect(f.f32[o + P.C_ENERGY]).toBeGreaterThan(0.45);
     expect(f.f32[o + P.C_ENERGY]).toBeLessThan(0.5);
     // A founder accepts a mate from its first thought.
-    expect(f.u32[o + P.C_FLAGS]).toBe(P.FLAG_WILLING);
+    expect(f.u32[o + P.C_FLAGS]).toBe(P.FLAG_WILLING | P.FLAG_CAN_DASH);
     // A founder brain: 4 hidden neurons and 65 connections.
     expect(f.u32[o + P.C_BRAIN]).toBe(4 | (65 << 16));
     uids.add(f.u32[o + P.C_UID] ?? 0);
@@ -351,7 +355,8 @@ test('pick, possess, input, and release go through the ABI', () => {
     // A founder accepts a mate from its first thought, and half of them have thought by now. A
     // dash or a bite can fire in the default world: those flags are not what this test reads.
     const flags =
-      (f.u32[r + P.C_FLAGS] ?? 0) & ~(P.FLAG_WILLING | P.FLAG_DASH | P.FLAG_BIT | P.FLAG_HURT);
+      (f.u32[r + P.C_FLAGS] ?? 0) &
+      ~(P.FLAG_WILLING | P.FLAG_DASH | P.FLAG_CAN_DASH | P.FLAG_BIT | P.FLAG_HURT);
     if (f.u32[r + P.C_UID] === uid) {
       expect(flags).toBe(P.FLAG_LINEAGE | P.FLAG_POSSESSED);
       flagged++;
@@ -397,4 +402,32 @@ test('a call after free does nothing', () => {
   expect(sim.heirs()).toEqual([]);
   expect(sim.brain(1).length).toBe(0);
   expect(sim.params()[0]?.value).toBe(0);
+});
+
+test('the frame flags the bodies that declare the dash, and the page reads it from there', () => {
+  const sim = fresh();
+  sim.seedFounders(50, 0);
+  const buf = new ArrayBuffer(4 * (P.FRAME_HEADER_WORDS + 300 * P.CREATURE_STRIDE));
+  const bodies = () => {
+    sim.writeFrame(0, 0, 1536, 1024, buf);
+    const f = P.viewFrame(buf);
+    return Array.from({ length: f.creatureCount }, (_, i) => {
+      const r = f.creatureBase + i * P.CREATURE_STRIDE;
+      return bodyIn(f, f.u32[r + P.C_SLOT] ?? 0);
+    });
+  };
+  const before = bodies();
+  expect(before.length).toBeGreaterThan(1);
+  expect(before.every((b) => b !== null && (b.flags & P.FLAG_CAN_DASH) !== 0)).toBe(true);
+  // A founder's flagellum is at its tail. With no size it pushes nothing and declares no dash.
+  const first = before[0];
+  expect(sim.setPart(first?.uid ?? 0, P.KIND_FLAGELLUM, 0)).toBe(true);
+  const after = bodies();
+  for (const b of after) {
+    const dashes = b?.uid !== first?.uid;
+    expect(((b?.flags ?? 0) & P.FLAG_CAN_DASH) !== 0).toBe(dashes);
+    expect(abilitiesOf(b?.parts ?? [], b?.flags ?? 0) & ABILITY_DASH).toBe(
+      dashes ? ABILITY_DASH : 0,
+    );
+  }
 });
