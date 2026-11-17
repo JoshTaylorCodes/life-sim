@@ -65,3 +65,25 @@ founder hunter counts its neighbours. Log: `rows/takeover-T2.log`.
 16 is about bite reach, so only hunters at the same prey count, which is what interference is in
 the literature (hunters competing over one kill). Expected: founder hunters establish (hunter share
 at 12,000 near the baseline's 0.3), carnivores survive, and the share stays under 0.8 on seeds 5 and 8.
+
+### T3 rows
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.937 | 0.063 | 0.000 | 0.568 | misses (carn) |
+| 4 | 0.922 | 0.078 | 0.000 | 0.511 | misses (carn) |
+| 5 | 0.400 | 0.480 | 0.121 | 0.914 | misses (hunters) |
+| 6 | 0.791 | 0.178 | 0.031 | 0.857 | misses (carn, hunters) |
+| 8 | 0.419 | 0.511 | 0.070 | 0.785 | misses (omni, carn) |
+
+0 of 5. The hunt returns (seed 5: 733 kills at 36,000, 5,196 at 72,000), and seed 5 meets every
+diet band, but hunters peak over 0.8 there. Seeds 1 and 4 lose the carnivores the batch head had
+(seed 1: 0.147 at the head). I1 at bite range still thins carnivores and does not hold the hunter
+share. Log: `rows/takeover-T3.log`.
+
+## T4: O1 alone at 0.3 (`jaw_filter_cost` 0.3, `interference` 0): hypothesis before the run
+
+O1 is aimed at the middle: a jawed grazer loses grazing, so it should go one way or the other.
+At 0.3 a founder jaw of 0.5 keeps 87% of its Filter. Expected: omnivores fall under 0.50 on seeds
+1, 5, 8 (0.52 to 0.54 at the head), and carnivores stay near the head's 0.15 to 0.23. The hunter
+share is not O1's job: it may stay over 0.8 on seeds 5 and 8.
