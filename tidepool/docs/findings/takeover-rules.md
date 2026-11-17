@@ -146,3 +146,22 @@ T3 kept carnivores on seeds 5 and 8 and met the diet bands on seed 5, but hunter
 At 0.6, two hunters at one prey take 0.45 each of a lone hunter's bite. Expected: the hunter peak
 on seeds 5 and 8 falls under 0.8, carnivores hold over 0.10 on one of them at least. Risk: as at
 radius 48, the hunt fails.
+
+### T7 rows
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.942 | 0.058 | 0.000 | 0.573 | misses (carn) |
+| 4 | 0.947 | 0.052 | 0.001 | 0.505 | misses (carn) |
+| 5 | 0.935 | 0.065 | 0.000 | 0.847 | misses (carn, hunters) |
+| 6 | 0.942 | 0.058 | 0.000 | 0.426 | misses (carn) |
+| 8 | 0.306 | 0.468 | 0.225 | 0.945 | misses (hunters) |
+
+0 of 5. Seed 8 meets every diet band, and its hunters peak at 0.945. Carnivores on 1 seed (T3: 2).
+Log: `rows/takeover-T7.log`.
+
+## T8: the set to ship: T3 with O1 on at a token dose (`interference` 0.3, radius 16, `jaw_filter_cost` 0.03): hypothesis before the run
+
+The last trial. Measures the shipped set itself. A rule cannot ship off (constitution, 2026-11-16), and
+O1 cut the carnivores at every dose read (0.1 to 1.0), so it ships at 0.03 and its deletion goes to
+the owner. Expected: near T3 (carnivores on seeds 5 and 8, seed 5 in the diet bands), 0 or 1 of 5.
