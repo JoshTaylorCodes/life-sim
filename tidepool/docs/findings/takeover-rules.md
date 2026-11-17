@@ -132,3 +132,17 @@ That even a light dose removes every carnivore is suspicious. With `interference
 `jaw_filter_cost` 0 both rules are off to the bit, so this head should give the batch head's rows
 (`225720e6`) exactly. If it does, the rules cut the climb at any dose. If it does not, something
 else moved the world between the two heads, and T1 to T5 compare against the wrong baseline.
+
+### T6 rows
+
+Row for row the batch head's (`225720e6`): seed 1 777 bodies, 0.336, 0.517, 0.147, and so on for
+every seed and sample. Both rules at 0 are off to the bit. **The rules cut the carnivores, at every
+dose tried.** O1 cuts them at 0.1 (T5), 0.3 (T4) and 1.0 (T1). I1 at a radius of 48 cuts them
+(T2). Only I1 at bite range, 16, kept carnivores, on 2 seeds (T3). Log: `rows/takeover-T6.log`.
+
+## T7: I1 at bite range, stronger (`interference` 0.6, radius 16, `jaw_filter_cost` 0): hypothesis before the run
+
+T3 kept carnivores on seeds 5 and 8 and met the diet bands on seed 5, but hunters peaked at 0.91.
+At 0.6, two hunters at one prey take 0.45 each of a lone hunter's bite. Expected: the hunter peak
+on seeds 5 and 8 falls under 0.8, carnivores hold over 0.10 on one of them at least. Risk: as at
+radius 48, the hunt fails.
