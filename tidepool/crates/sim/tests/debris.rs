@@ -74,6 +74,7 @@ fn still(w: &mut World) {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
     ] {
         w.params.set(k, 0.0);
     }

@@ -625,10 +625,12 @@ test('picking an heir resumes the world in that body', () => {
     { name: 'bud_at', value: 0.2 },
     { name: 'bud_cooldown', value: 0 },
     { name: 'lifespan', value: 1200 },
-    ...['basal', 'fixed_upkeep', 'neuron_upkeep', 'conn_upkeep', 'move_cost'].map((name) => ({
-      name,
-      value: 0,
-    })),
+    ...['basal', 'fixed_upkeep', 'neuron_upkeep', 'conn_upkeep', 'move_cost', 'turn_cost'].map(
+      (name) => ({
+        name,
+        value: 0,
+      }),
+    ),
   ];
   r.host.handle({ type: 'init', seed: 1, params });
   r.host.handle({ type: 'possess', uid: 88 });
@@ -1000,4 +1002,135 @@ test('a possessed body bitten to death posts cause eaten, the killer, and its br
   expect(died[0]?.killer?.generation).toBe(0); // a founder
   expect(died[0]?.killer?.parts.some((p) => p.kind === P.KIND_JAW)).toBe(true);
   expect(P.readBrain(died[0]?.killerBrain ?? new Uint32Array(0))?.uid).toBe(pair.hunter);
+});
+
+// Each tick of the core costs `cost` ms of the fake clock. At 20 ticks a second a tick is due every
+// 50 ms, so a cost above that is a device that cannot hold real time.
+function costly() {
+  let cost = 0;
+  const wrap = (sim: Sim): Sim => ({
+    ...sim,
+    tick: (n) => {
+      r.jump(cost * n);
+      sim.tick(n);
+    },
+  });
+  const r = rig({ recycle: true, wrap });
+  return { r, setCost: (ms: number) => void (cost = ms) };
+}
+
+test('a clock too slow for the asked ticks turns the slow signal on, and a fast one turns it off', () => {
+  const { r, setCost } = costly();
+  r.host.handle({ type: 'init', seed: 1 });
+  r.advance(1000);
+  expect(r.of('stats').length).toBeGreaterThan(0);
+  expect(r.of('stats').map((s) => s.slow)).not.toContain(true);
+
+  setCost(100);
+  r.advance(3000);
+  expect(r.of('stats').at(-1)?.slow).toBe(true);
+
+  setCost(0);
+  r.advance(3000);
+  expect(r.of('stats').at(-1)?.slow).toBe(false);
+});
+
+test('a pause and a hidden tab, which is a pause, do not turn the slow signal on', () => {
+  const { r, setCost } = costly();
+  r.host.handle({ type: 'init', seed: 1 });
+  setCost(100);
+  r.advance(1000);
+  expect(r.of('stats').at(-1)?.slow).toBe(true);
+
+  // The page holds the world with `speed` 0 while its tab is hidden. The time that goes by is no debt.
+  r.host.handle({ type: 'speed', ticksPerSecond: 0 });
+  r.jump(10_000);
+  r.advance(1000);
+  setCost(0);
+  r.host.handle({ type: 'speed', ticksPerSecond: P.TICK_HZ });
+  const before = r.of('stats').length;
+  r.advance(1000);
+  const after = r.of('stats').slice(before);
+  expect(after.length).toBeGreaterThan(0);
+  expect(after.map((s) => s.slow)).not.toContain(true);
+});
+
+test('a world that is slow for a moment and then clears does not turn the signal on', () => {
+  const r = rig({ recycle: true });
+  r.host.handle({ type: 'init', seed: 1 });
+  r.advance(500);
+  r.jump(10_000); // one stalled step, as a collection of garbage or a busy tab makes
+  r.advance(3000);
+  expect(r.of('stats').length).toBeGreaterThan(5);
+  expect(r.of('stats').map((s) => s.slow)).not.toContain(true);
+});
+
+test('a device a hair too slow does not make the signal toggle once it has settled', () => {
+  const { r, setCost } = costly();
+  r.host.handle({ type: 'init', seed: 1 });
+  setCost(51); // against a period of 50 ms
+  r.advance(20_000);
+  const settled = r
+    .of('stats')
+    .map((s) => s.slow)
+    .slice(-50);
+  expect(settled.length).toBe(50);
+  expect(new Set(settled).size).toBe(1);
+});
+
+test('the slow signal clears when the world pauses, for a hidden tab or a death', () => {
+  const { r, setCost } = costly();
+  r.host.handle({ type: 'init', seed: 1 });
+  setCost(100);
+  r.advance(1500);
+  expect(r.of('stats').at(-1)?.slow).toBe(true);
+  r.host.handle({ type: 'speed', ticksPerSecond: 0 });
+  r.advance(10);
+  expect(r.of('stats').at(-1)?.slow).toBe(false);
+
+  const m = mortal();
+  let cost = 100;
+  const d = rig({
+    recycle: true,
+    wrap: (sim) => {
+      const w = m.wrap(sim);
+      return {
+        ...w,
+        tick: (n) => {
+          d.jump(cost * n);
+          w.tick(n);
+        },
+      };
+    },
+  });
+  d.host.handle({ type: 'init', seed: 1 });
+  d.host.handle({ type: 'possess', uid: 7 });
+  d.advance(400);
+  expect(d.of('stats').at(-1)?.slow).toBe(true);
+  expect(d.of('died')).toEqual([]);
+  cost = 0;
+  m.die(1);
+  d.advance(100);
+  expect(d.of('died').length).toBe(1);
+  expect(d.of('stats').at(-1)?.slow).toBe(false);
+});
+
+test('a death pause does not turn the slow signal on', () => {
+  const m = mortal();
+  const r = rig({ recycle: true, wrap: m.wrap });
+  r.host.handle({ type: 'init', seed: 1 });
+  r.host.handle({ type: 'possess', uid: 7 });
+  r.advance(100); // 2 ticks
+  r.jump(10_000); // a stall: the world drops the ticks that it cannot run
+  r.advance(10);
+  m.die(1);
+  r.advance(100);
+  const died = r.of('died')[0];
+  expect(died).toBeDefined();
+  const before = r.of('stats').length;
+  r.host.handle({ type: 'possess', uid: died?.heirs[0]?.uid ?? 0 });
+  r.advance(1000);
+  const after = r.of('stats').slice(before);
+  expect(after.length).toBeGreaterThan(0);
+  expect(after.map((s) => s.slow)).not.toContain(true);
 });
