@@ -32,6 +32,6 @@ these runs are deterministic, so the load changes only the time). Full log:
 At 36,000 on seed 1, the age of the baked world: hunter share 0.899, herbivores with a jaw 0.888.
 A jaw is near universal. "Hunter" (a jaw) no longer tells a hunter from prey in the shipped world.
 Against #1690's target (omnivores 0.50 or under, herbivores and carnivores 0.10 or more each,
-hunters never over 0.8 of the living): seed 4 alone meets the diet bands, no seed meets the hunter band.
+hunters never over 0.8 of the living): no seed meets the diet bands (seed 4 is nearest, carnivores 0.086) and no seed meets the hunter band.
 
 ## Batch: (pending)
