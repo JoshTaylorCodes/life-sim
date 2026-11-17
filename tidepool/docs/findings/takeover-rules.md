@@ -45,3 +45,23 @@ plant eaters. The hunter band holds only because there is little to hunt with. L
 Isolates which rule ended the hunt. Expected: I1 alone acts only where hunters crowd, so carnivores
 survive (0.1 to 0.25 as in the baseline) and the hunter share on seeds 5 and 8 falls under 0.8. If
 carnivores still vanish, I1 at 0.3 is the cause.
+
+### T2 rows
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.946 | 0.054 | 0.000 | 0.188 | misses (carn) |
+| 4 | 0.952 | 0.048 | 0.000 | 0.828 | misses (carn, hunters) |
+| 5 | 0.941 | 0.059 | 0.000 | 0.213 | misses (carn) |
+| 6 | 0.950 | 0.050 | 0.000 | 0.264 | misses (carn) |
+| 8 | 0.955 | 0.045 | 0.000 | 0.479 | misses (carn) |
+
+0 of 5. **I1 alone ends the hunt too.** On seed 1 the hunter share is 0.010 at 12,000: the founder
+hunters fail before they establish. They start near each other, and at a radius of 48 every
+founder hunter counts its neighbours. Log: `rows/takeover-T2.log`.
+
+## T3: I1 alone at a radius of 16 (`interference` 0.3, `interference_radius` 16, `jaw_filter_cost` 0): hypothesis before the run
+
+16 is about bite reach, so only hunters at the same prey count, which is what interference is in
+the literature (hunters competing over one kill). Expected: founder hunters establish (hunter share
+at 12,000 near the baseline's 0.3), carnivores survive, and the share stays under 0.8 on seeds 5 and 8.
