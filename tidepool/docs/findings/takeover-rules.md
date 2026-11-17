@@ -38,7 +38,7 @@ Filter) and carnivores vanish early.
 
 0 of 5, `gate-health` 3/3. **The risk came true:** hunting collapses. Kills fall from about 500 at
 12,000 to under 10 by 36,000 on seeds 1 and 5, carnivores are gone everywhere, and the world is
-plant eaters. The hunter band holds only because there is little to hunt with. Log: `rows/takeover-T1.log`.
+herbivores. The hunter band holds only because there is little to hunt with. Log: `rows/takeover-T1.log`.
 
 ## T2: I1 alone (`jaw_filter_cost` 0, `interference` 0.3): hypothesis before the run
 
@@ -83,7 +83,7 @@ share. Log: `rows/takeover-T3.log`.
 
 ## T4: O1 alone at 0.3 (`jaw_filter_cost` 0.3, `interference` 0): hypothesis before the run
 
-O1 is aimed at the middle: a jawed grazer loses grazing, so it should go one way or the other.
+O1 is aimed at the middle: a jawed herbivore loses grazing, so it should go one way or the other.
 At 0.3 a founder jaw of 0.5 keeps 87% of its Filter. Expected: omnivores fall under 0.50 on seeds
 1, 5, 8 (0.52 to 0.54 at the head), and carnivores stay near the head's 0.15 to 0.23. The hunter
 share is not O1's job: it may stay over 0.8 on seeds 5 and 8.
@@ -103,7 +103,7 @@ about 700 at 12,000 to under 60 by 36,000 (seed 1), as in T1 and T2. The expecta
 
 **What T1 to T4 show together.** In this world carnivores do not arrive with the founders: the
 founder hunters fade by 36,000, and carnivores evolve late (the head's seed 1: 0.016 at 36,000,
-0.147 at 144,000) by a climb from jawed grazers through the middle. Each rule cuts the climb:
+0.147 at 144,000) by a climb from jawed herbivores through the middle. Each rule cuts the climb:
 O1 taxes the middle step, I1 taxes the payoff of the hunt. The head is already close on seeds 1,
 5 and 8 (omnivores 0.52 to 0.54, carnivores in band). Log: `rows/takeover-T4.log`.
 
@@ -183,7 +183,7 @@ now have some, 5 and 8 (which had them in T3) have none.
 
 **The target is not met by any trial.** Seeds with carnivores at 0.10 or more: 3 of 5 with both
 rules off (the head, T6), **2 of 35** over the seven trials with a rule on. The rules suppress the
-carnivores. In this world a carnivore is not founded: it evolves late, by a climb from jawed grazers
+carnivores. In this world a carnivore is not founded: it evolves late, by a climb from jawed herbivores
 through the middle, and O1 taxes the middle step while I1 taxes the hunt's payoff. Both rules work
 against the end of the ladder they were meant to widen.
 

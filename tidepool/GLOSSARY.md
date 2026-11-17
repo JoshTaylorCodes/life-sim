@@ -24,6 +24,14 @@ _Avoid_: DNA, chromosome
 A body piece declared by a part gene that grants an ability and declares brain inputs and outputs. A part does what it looks like it does.
 _Avoid_: organ, module, component
 
+**Filter**:
+The part that eats plants and debris on contact. It has no output, and a jaw on the same body lowers what it takes. A Filter of size 0 eats nothing.
+_Avoid_: mouth (a Jaw is also a mouth), feeder
+
+**Pair**:
+A part off the midline, which is two mirrored parts, one on each side. Its size splits between the two sides. A part at the nose or the tail is not a pair.
+_Avoid_: twin, double part
+
 **Brain**:
 A creature's recurrent neural network, grown from node genes and connection genes. A creature thinks on one tick in `think_every`.
 _Avoid_: AI, controller, net
@@ -53,6 +61,10 @@ _Avoid_: predator
 **Prey**:
 A creature with no jaw.
 _Avoid_: victim, grazer
+
+**Interference**:
+The rule that cuts a hunter's bite for each other hunter close to it.
+_Avoid_: crowding, predator interference
 
 ## Reproduction
 
@@ -95,6 +107,10 @@ _Avoid_: checksum, fingerprint
 **Snapshot**:
 The byte buffer `World::save` writes and `World::load` reads: magic `TDPL`, format version, payload, CRC32.
 _Avoid_: save file, dump
+
+**Baked world**:
+A world run ahead of time and saved as a snapshot, so the page opens on creatures that have already evolved.
+_Avoid_: preset, demo save
 
 **Param**:
 A named tunable `f32` in the table in `params.rs`, with a default, a minimum, and a maximum.

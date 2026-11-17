@@ -42,7 +42,7 @@ pub(crate) fn side(y: f32) -> f32 {
 /// that hold `s` also hurt it (spikes) in proportion to what the bite took, so a bite a shell
 /// blocked whole costs `s` nothing to a spike. What a spike hurts is lost. The bite is divided by
 /// `1 + interference * n`, where `n` counts the other live bodies but the bitten one with a
-/// `jaw_sum` over 0 whose centre is within `interference_radius` of that of `s` (rule I1, predator
+/// `jaw_sum` over 0 whose centre is within `interference_radius` of that of `s` (rule I1, hunter
 /// interference). The creature grid is that of the start of the tick and bodies have moved by at
 /// most `v_max` since, so the count reads the grid that far past the radius. A count is the same in
 /// any order.
