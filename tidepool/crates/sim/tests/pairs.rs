@@ -192,3 +192,55 @@ fn each_eye_of_a_pair_sees_half_as_far_as_one_midline_eye_of_the_same_size() {
         assert!(close(near, 1.0 - 10.0 / 19.2), "{near}");
     }
 }
+
+/// The drag that one shell gene puts on a body coasting along its heading for one tick, at
+/// `shell_block` 2: a side blocks a whole bite at the side size 0.5.
+fn shell_drag(anchor: f32, size: f32) -> f32 {
+    let mut w = still_water();
+    w.params.set(id::SHELL_BLOCK, 2.0);
+    w.params.set(id::SHELL_DRAG, 0.1);
+    let s = adult(&mut w, 100.0, Some(gene(KIND_SHELL, anchor, size)));
+    w.creatures.vx[s] = 1.0;
+    w.run(1);
+    1.0 - w.creatures.vx[s]
+}
+
+/// The sides of a pair at 0.5 face right and left, so no direction holds both.
+const SPLIT_PAIR: f32 = 0.5;
+
+#[test]
+fn a_split_pairs_drag_stops_rising_where_its_best_side_blocks_a_whole_bite() {
+    // Each side holds half of the gene's size, so its best side blocks a whole bite at the size 1.
+    let (before, at, past) = (
+        shell_drag(SPLIT_PAIR, 0.8),
+        shell_drag(SPLIT_PAIR, 1.0),
+        shell_drag(SPLIT_PAIR, 1.4),
+    );
+    assert!(before < at - 1e-3, "{before} {at}");
+    assert!(close(at, past), "{at} {past}");
+}
+
+#[test]
+fn a_midline_shell_and_a_pair_that_holds_one_direction_stop_at_the_size_that_blocks_a_whole_bite() {
+    // The sides of a nose pair both face the line ahead, so they block as one shell.
+    for anchor in [1.0, TAIL_PAIR, NOSE_PAIR] {
+        let (before, at, past) = (
+            shell_drag(anchor, 0.4),
+            shell_drag(anchor, 0.5),
+            shell_drag(anchor, 0.9),
+        );
+        assert!(before < at - 1e-3, "{anchor}: {before} {at}");
+        assert!(close(at, past), "{anchor}: {at} {past}");
+    }
+}
+
+#[test]
+fn an_anchor_under_one_byte_step_is_a_midline_part_as_the_page_draws_it() {
+    // The frame packs an anchor as a byte, and a page that reads the byte draws 0 as a midline
+    // part. 0.001 is under half a step, 1/510.
+    let cones = plant_inputs(gene(KIND_EYE, 0.001, 0.2));
+    assert_eq!(cones.len(), 1);
+    assert!(close(cones[0], 1.0 - 10.0 / 38.4), "{cones:?}");
+    // 0.01 is over a step, so it stays a pair.
+    assert_eq!(plant_inputs(gene(KIND_EYE, 0.01, 0.2)).len(), 2);
+}
