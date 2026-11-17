@@ -1,7 +1,7 @@
 //! Rule D1 of the diet plan: the `diet` gene, the Filter factor `(1 - diet)^diet_k`, and the bite
 //! factor `diet^diet_k`.
 
-use tidepool_sim::genome::{BrainGenome, Genome, KIND_JAW};
+use tidepool_sim::genome::{BrainGenome, Genome, KIND_FILTER, KIND_JAW};
 use tidepool_sim::math::pow_quarters;
 use tidepool_sim::params::{id, Params};
 use tidepool_sim::rng::Rng;
@@ -37,12 +37,19 @@ fn still_water() -> World {
 
 /// The reference founder at rest at the place, half full, with an empty brain. It never buds.
 fn adult(w: &mut World, x: f32, diet: f32, jaw: bool) -> usize {
+    adult_shaped(w, x, diet, |g| {
+        if jaw {
+            g.set_size(KIND_JAW, 0.5);
+        }
+    })
+}
+
+/// `adult`, with `shape` applied to the genome before the spawn.
+fn adult_shaped(w: &mut World, x: f32, diet: f32, shape: impl FnOnce(&mut Genome)) -> usize {
     let mut g = Genome::founder(&mut Rng::new(1), &w.params);
     (g.len, g.wid, g.diet) = (12.0, 0.5, diet);
     g.brain = BrainGenome::default();
-    if jaw {
-        g.set_size(KIND_JAW, 0.5);
-    }
+    shape(&mut g);
     let at = SpawnAt {
         x,
         y: 256.0,
@@ -61,9 +68,14 @@ fn adult(w: &mut World, x: f32, diet: f32, jaw: bool) -> usize {
 /// What a body of this diet takes from a plant it sits on in one tick. The plant holds more than
 /// the body's Filter can take, so the Filter's rate decides the take.
 fn filter_take(diet_k: f32, diet: f32) -> f32 {
+    filter_size_take(diet_k, diet, 0.6)
+}
+
+/// `filter_take` for a body whose Filter has this size.
+fn filter_size_take(diet_k: f32, diet: f32, size: f32) -> f32 {
     let mut w = still_water();
     w.params.set(id::DIET_K, diet_k);
-    adult(&mut w, 200.0, diet, false);
+    adult_shaped(&mut w, 200.0, diet, |g| g.set_size(KIND_FILTER, size));
     let s = w.plants.slots.alloc().expect("plant slot") as usize;
     (w.plants.x[s], w.plants.y[s]) = (200.0, 256.0);
     (w.plants.reserve[s], w.plants.cap[s]) = (40.0, 40.0);
@@ -98,6 +110,23 @@ fn a_diet_1_body_takes_nothing_from_a_plant_and_a_diet_0_body_bites_nothing() {
     assert!(filter_take(1.5, 0.0) > 0.0 && bite_take(1.5, 1.0) > 0.0);
     assert_eq!(filter_take(1.5, 1.0), 0.0);
     assert_eq!(bite_take(1.5, 0.0), 0.0);
+}
+
+#[test]
+fn a_filter_of_size_0_eats_nothing_and_adds_no_mass() {
+    assert!(filter_size_take(0.0, 0.0, 0.1) > 0.0);
+    assert_eq!(filter_size_take(0.0, 0.0, 0.0), 0.0);
+
+    let mut w = still_water();
+    let (part_mass, eye_cost) = (w.params.get(id::PART_MASS), w.params.get(id::EYE_COST));
+    let mass = |w: &World, s: usize| w.creatures.mass(s, part_mass, eye_cost);
+    let none = adult_shaped(&mut w, 100.0, 0.0, |g| {
+        g.parts.retain(|x| x.kind != KIND_FILTER)
+    });
+    let zero = adult_shaped(&mut w, 200.0, 0.0, |g| g.set_size(KIND_FILTER, 0.0));
+    let full = adult_shaped(&mut w, 300.0, 0.0, |g| g.set_size(KIND_FILTER, 0.6));
+    assert_eq!(mass(&w, zero), mass(&w, none));
+    assert!(mass(&w, full) > mass(&w, zero));
 }
 
 #[test]

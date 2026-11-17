@@ -51,6 +51,7 @@ import {
   openGuide,
   pageBusy,
   pulse,
+  loadingWorld,
   ready,
   showDeath,
   starving,
@@ -99,6 +100,7 @@ import {
 } from './input';
 import { bodyIn, childOf, differences, showsCard } from './kin';
 import { loadWalk, note, saveWalk } from './walkstore';
+import { noWorld, worldFile } from './world';
 import {
   begin,
   huntFacts,
@@ -217,12 +219,6 @@ function bindPointer(canvas: HTMLCanvasElement, on: PointerHandlers): void {
     { passive: false },
   );
 }
-
-// The error panel's text for a world file that did not load. A reason from the worker can carry its
-// own fix.
-const noWorld = (url: string, reason: string): string =>
-  `The world file ${url} did not load: ${reason}` +
-  (reason.includes('Fix:') ? '' : '. Fix: put the address of a Tidepool snapshot after `?world=`.');
 
 // The energy of the creature in `slot`, or null when the frame does not hold it.
 function energyOf(frame: FrameView, slot: number): number | null {
@@ -358,8 +354,9 @@ function start(): void {
     stop();
   };
 
-  // In `?debug`, each `p=<name>=<value>` of the query string sets a parameter before the founders
-  // are seeded. The worker rejects a name that is not in the table.
+  // In `?debug`, each `p=<name>=<value>` of the query string sets a parameter: before the founders
+  // are seeded under `?founders`, after the load of a world file otherwise. The worker rejects a
+  // name that is not in the table.
   const initParams: { name: string; value: number }[] = [];
   for (const p of query.has('debug') ? query.getAll('p') : []) {
     const [name = '', number = '', ...rest] = p.split('=');
@@ -799,11 +796,12 @@ function start(): void {
         break;
     }
   };
-  // `?world=<url>` starts from a snapshot file in place of the founders.
-  const worldUrl = query.get('world');
+  // No query: the baked world. `?world=<url>` loads another snapshot. `?founders` starts from founders.
+  const worldUrl = worldFile(query);
   if (worldUrl === null) {
     send({ type: 'init', seed: 1, params: initParams });
   } else {
+    loadingWorld.value = true;
     fetch(worldUrl)
       .then(async (answer) => {
         if (!answer.ok) throw new Error(`the server answered ${answer.status}`);

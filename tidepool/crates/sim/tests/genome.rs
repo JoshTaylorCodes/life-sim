@@ -439,6 +439,29 @@ fn mutation_changes_a_gene() {
 }
 
 #[test]
+fn mutation_can_bring_a_filter_to_size_0_and_a_world_with_one_loads() {
+    let mut p = off();
+    p.set(id::MUT_RATE, 1.0);
+    p.set(id::MUT_SIGMA, 1.0);
+    let mut rng = Rng::new(5);
+    let mut g = Genome::founder(&mut rng, &p);
+    let filter = |g: &Genome| g.parts.iter().find(|x| x.kind == KIND_FILTER).unwrap().size;
+    let mut reached = false;
+    for _ in 0..200 {
+        g = g.mutated(&mut rng, &p, &mut 100);
+        assert!((0.0..=1.0).contains(&filter(&g)));
+        reached |= filter(&g) == 0.0;
+    }
+    assert!(reached, "no Filter reached size 0 in 200 mutations");
+
+    g.set_size(KIND_FILTER, 0.0);
+    let mut world = World::new(1, 256.0, 256.0);
+    world.spawn(g, at(10.0)).expect("slot");
+    let loaded = World::load(&world.save()).expect("load");
+    assert_eq!(loaded.genomes[0].size_of(KIND_FILTER), 0.0);
+}
+
+#[test]
 fn add_puts_a_small_new_part_on_the_end_with_a_new_id() {
     let mut p = off();
     p.set(id::MUT_PART_ADD, 1.0);
@@ -452,7 +475,6 @@ fn add_puts_a_small_new_part_on_the_end_with_a_new_id() {
         assert_eq!(child.parts.len(), 5);
         let new = &child.parts[4];
         assert!((1..=KINDS).contains(&new.kind));
-        // A new Filter is held at 0.2, the least size of a Filter.
         let (lo, hi) = SIZE_RANGE[new.kind as usize];
         assert_eq!(new.size, p.get(id::PART_NEW_SIZE).clamp(lo, hi));
         assert!((0.0..1.0).contains(&new.anchor) && (0.0..1.0).contains(&new.extra));
