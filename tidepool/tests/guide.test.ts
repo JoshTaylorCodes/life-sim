@@ -554,7 +554,7 @@ test('the guide names each kind of part, and says what a jaw, a spike, a shell, 
   // "A shell plate blocks part of a bite from its side, and slows its body."
   expect(code('bite.rs')).toContain('KIND_SHELL if held(shell_cos2) => shell += c.guard_size[k]');
   expect(code('bite.rs')).toContain('(bite * (1.0 - (shell_block * shell).min(1.0)))');
-  expect(code('motor.rs')).toContain('drag_fwd + shell_drag * c.shell_sum[s]');
+  expect(code('motor.rs')).toContain('drag_fwd + shell_drag * shell');
   // "A toxin gland releases a cloud that drains every other body inside it."
   expect(code('ability.rs')).toContain('c.uid[j] == maker');
   expect(code('ability.rs')).toContain('c.energy[j] -= take;');
