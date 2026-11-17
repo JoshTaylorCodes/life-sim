@@ -214,3 +214,10 @@ For the owner:
   (`kills_late` 1 to 5 against 20, `flesh_late` 0.000, `carn_hi` 0.001). Seed 5 also fails the chemo
   gap (0.018). The long predation bands reject a world without a hunt, which is what they are for.
 - Throughput not read: the machine held other projects' tests.
+
+## The rebake at the shipped set (#1691)
+
+`75d5d3c3` core, snapshot format 19, `run --seed 1 --creatures 400 --plants 1200`:
+
+- `m2-world.tdpl`: tick 36,000, 1,605 creatures, 2,229 plants, 566 debris, hash `12fc664d`. The page opens on it.
+- `m2-world-long.tdpl`: tick 144,000, 1,242 creatures, 2,229 plants, 554 debris, hash `6c256efc`.
