@@ -83,8 +83,9 @@ pub fn step(world: &mut World) {
             let level = s0 * chemo;
             let input = &mut input[in_scent as usize..][..3];
             input[0] = (level / (1.0 + level) - level_floor).max(0.0);
-            let fwd = ((gx * hc + gy * hs) * k).clamp(-1.0, 1.0);
-            let across = ((-gx * hs + gy * hc) * k).clamp(-1.0, 1.0);
+            let cap = chemo.min(1.0);
+            let fwd = ((gx * hc + gy * hs) * k).clamp(-cap, cap);
+            let across = ((-gx * hs + gy * hc) * k).clamp(-cap, cap);
             let strength = (fwd * fwd + across * across).sqrt();
             let keep = if strength > 0.0 {
                 (strength - floor).max(0.0) / strength

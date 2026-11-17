@@ -428,8 +428,13 @@ fn a_founder_still_follows_scent_to_food() {
 /// The three scent inputs of a creature at `x` on the axis of a patch of plants at 1000, facing it,
 /// one tick after it is born. With `open` both chemoreceptor floors are 0.
 fn scent_inputs(chemo: f32, x: f32, open: bool) -> [f32; 3] {
+    scent_inputs_at_gain(chemo, x, open, Params::new().get(id::CHEMO_GAIN))
+}
+
+fn scent_inputs_at_gain(chemo: f32, x: f32, open: bool, gain: f32) -> [f32; 3] {
     let mut w = World::new(1, 1536.0, 1024.0);
     w.params.set(id::THINK_EVERY, 1.0);
+    w.params.set(id::CHEMO_GAIN, gain);
     if open {
         w.params.set(id::CHEMO_FLOOR, 0.0);
         w.params.set(id::CHEMO_LEVEL_FLOOR, 0.0);
@@ -490,6 +495,19 @@ fn the_level_floor_takes_level_off_a_small_chemoreceptor() {
     let open = scent_inputs(0.1, 1000.0, true);
     assert!(founder[0] > 0.1, "founder level {}", founder[0]);
     assert!(small[0] < open[0], "{small:?} against {open:?}");
+}
+
+/// A gain of 20 puts a size-0.2 receptor past saturation in the same scent that saturates a
+/// size-1.0 one. The small one still reads less: size scales the signal after the clamp.
+#[test]
+fn a_small_chemoreceptor_reads_less_than_a_large_one_in_strong_scent() {
+    let large = scent_inputs_at_gain(1.0, 700.0, true, 20.0);
+    let small = scent_inputs_at_gain(0.2, 700.0, true, 20.0);
+    assert!(large[1] > 0.9, "large receptor: {large:?}");
+    assert!(
+        small[1] > 0.0 && small[1] < large[1],
+        "{small:?} against {large:?}"
+    );
 }
 
 #[test]
