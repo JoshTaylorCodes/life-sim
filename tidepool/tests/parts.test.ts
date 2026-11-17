@@ -397,6 +397,14 @@ test('the outline swells at each place with a mouth, and a larger mouth swells m
   expect(Math.min(first[1] ?? 0, first[3] ?? 0)).toBeGreaterThan(0);
 });
 
+test('a Filter of size 0 draws no mouth and no swell', () => {
+  const rows = instancesOf(frameOf(0, [word(KIND_FLAGELLUM, 1, 0.6), word(KIND_FILTER, 0, 0)]));
+  expect(rows.map((row) => row[4])).toEqual([KIND_FLAGELLUM]);
+  expect(outlined([part(KIND_FILTER, 0, 0)]).swells).toEqual(Array(OUTLINE_FLOATS - 4).fill(0));
+  // A Filter that is not 0 still draws.
+  expect(instancesOf(frameOf(0, [word(KIND_FILTER, 0, 0.1)])).length).toBe(1);
+});
+
 test('the outline of a body is made again only when the body or its size changes', () => {
   const mouth = [part(KIND_FILTER, 0, 0.8)];
   const out = new Float64Array(3 * OUTLINE_FLOATS).fill(9);
