@@ -292,6 +292,27 @@ fn a_spike_hurts_the_biter_and_the_energy_is_gone() {
 }
 
 #[test]
+fn a_spike_hurts_by_what_the_shell_let_through() {
+    // The prey has a spike and a shell at the tail, where the biter is. A shell of size 1 blocks
+    // the whole bite and one of size 0.5 half of it. The unblocked bite is 3 and its spike hurt 1.5.
+    let hurt = |shell: Option<f32>| {
+        let (mut w, s, _) = pair(|g| {
+            guard(KIND_SPIKE, 1.0, 0.5)(g);
+            if let Some(size) = shell {
+                guard(KIND_SHELL, 1.0, size)(g);
+            }
+        });
+        w.params.set(id::SPIKE_HURT, 1.0);
+        w.params.set(id::SHELL_BLOCK, 1.0);
+        w.run(1);
+        w.creatures.hurt[s]
+    };
+    assert!((hurt(None) - 1.5).abs() < 1e-5);
+    assert!((hurt(Some(0.5)) - 0.75).abs() < 1e-5);
+    assert_eq!(hurt(Some(1.0)), 0.0);
+}
+
+#[test]
 fn a_bite_to_0_kills_with_cause_eaten_and_names_the_killer() {
     let (mut w, s, j) = pair(|_| {});
     w.creatures.energy[j] = 2.0;
