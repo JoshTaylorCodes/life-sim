@@ -1,4 +1,4 @@
-// The ability buttons of the possessed body, rule X2 of the M4 plan: Dash with a Flagellum, Toxin
+// The ability buttons of the possessed body, rule X2 of the M4 plan: Dash with a Flagellum that pushes forward, Toxin
 // with a Toxin gland, and none for a body with no such part. A dash of a body with a Jaw is a
 // strike (rule P1 of the parts retune): it has no button of its own. A button is held,
 // as the Court button is: its bit is set for as long as the pointer or the key is down. While the

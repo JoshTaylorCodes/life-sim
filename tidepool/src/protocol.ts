@@ -1,7 +1,7 @@
 // Constants and layouts shared by the page and the worker. The frame layout mirrors
 // crates/sim/src/frame.rs. tests/abi.test.ts fails if the two disagree.
 
-export const ABI_VERSION = 10;
+export const ABI_VERSION = 11;
 export const TICK_HZ = 20;
 export const FRAME_HEADER_WORDS = 50;
 export const CREATURE_STRIDE = 26;
@@ -63,7 +63,8 @@ export const FLAG_LINEAGE = 1,
   FLAG_DONOR = 64, // the body holds the genes of a partner for its next bud
   FLAG_BIT = 128, // a bite of the body took energy a short time ago
   FLAG_HURT = 256, // the body lost energy to a hit a short time ago
-  FLAG_DASH = 512; // the body dashed a short time ago
+  FLAG_DASH = 512, // the body dashed a short time ago
+  FLAG_CAN_DASH = 1024; // the body declares the dash: a flagellum that pushes forward
 
 // The kinds of part. They mirror the `KIND_` constants in crates/sim/src/genome.rs.
 export const KIND_FLAGELLUM = 1,

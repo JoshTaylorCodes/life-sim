@@ -2,6 +2,7 @@
 //! brain.
 
 use crate::brain::{self, Ports, N_OUT_MAX};
+use crate::creature::push_of;
 use crate::params::{id, Params, DEFS};
 use crate::rng::Rng;
 use crate::snapshot::{LoadError, Reader, Writer};
@@ -709,6 +710,15 @@ impl Genome {
         let of_kind = self.parts.iter().filter(|part| part.kind == kind);
         // A fold from 0, because the sum of no floats is -0.
         of_kind.fold(0.0, |sum, part| sum + unit(part.size))
+    }
+
+    /// The sum over the flagella of `size * push_of(anchor)`: the forward push of the body, as in
+    /// `Creatures::express`.
+    pub fn push_sum(&self) -> f32 {
+        let flagella = self.parts.iter().filter(|part| part.kind == KIND_FLAGELLUM);
+        flagella.fold(0.0, |sum, part| {
+            sum + unit(part.size) * push_of(unit(part.anchor))
+        })
     }
 
     /// Sets the first part of the kind. With none, adds one at the founder anchor of the kind, with

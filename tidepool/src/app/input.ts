@@ -13,7 +13,7 @@ import {
   C_X,
   C_Y,
   CREATURE_STRIDE,
-  KIND_FLAGELLUM,
+  FLAG_CAN_DASH,
   KIND_TOXIN,
   NO_SLOT,
   type FrameView,
@@ -93,15 +93,12 @@ export function steerFromKeys(
 }
 
 /**
- * The abilities that parts give: a Flagellum a dash, a Toxin gland a cloud. A Jaw gives none: it
- * makes the body's dash a strike.
+ * The abilities of a body: a dash when the core flags it (`FLAG_CAN_DASH`: a flagellum that pushes
+ * forward), a cloud for a Toxin gland. A Jaw gives none: it makes the body's dash a strike.
  */
-export function abilitiesOf(parts: Part[]): number {
-  let mask = 0;
-  for (const { kind } of parts) {
-    if (kind === KIND_FLAGELLUM) mask |= ABILITY_DASH;
-    else if (kind === KIND_TOXIN) mask |= ABILITY_TOXIN;
-  }
+export function abilitiesOf(parts: Part[], flags: number): number {
+  let mask = flags & FLAG_CAN_DASH ? ABILITY_DASH : 0;
+  for (const { kind } of parts) if (kind === KIND_TOXIN) mask |= ABILITY_TOXIN;
   return mask;
 }
 

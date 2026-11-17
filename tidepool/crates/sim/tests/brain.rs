@@ -347,13 +347,18 @@ fn a_body_with_no_chemoreceptor_has_no_scent_input() {
         mark: 0,
     };
     let (x, y) = (w.plants.x[0], w.plants.y[0]);
+    let mut small = with.clone();
+    small.set_size(KIND_CHEMO, 0.1);
     let nosed = w.spawn(with, SpawnAt { x, y, ..at(0.0) }).expect("slot") as usize;
     let noseless = w.spawn(zero, SpawnAt { x, y, ..at(0.0) }).expect("slot") as usize;
+    let tiny = w.spawn(small, SpawnAt { x, y, ..at(0.0) }).expect("slot") as usize;
     w.tick();
     assert!(
         w.brains.inputs_mut(nosed)[N_BODY_IN] > 0.0,
         "no scent at a plant"
     );
+    // A small receptor on the same plant is under the level floor: no weight can lift a 0.
+    assert_eq!(w.brains.inputs_mut(tiny)[N_BODY_IN], 0.0);
     assert_eq!(w.brains.inputs_mut(noseless).len(), 14);
 }
 
@@ -418,6 +423,79 @@ fn a_founder_still_follows_scent_to_food() {
         }
     }
     assert!(wins >= 4, "nose beat no nose on only {wins} of 5 seeds");
+}
+
+/// The three scent inputs of a creature at `x` on the axis of a patch of plants at 1000, facing it,
+/// one tick after it is born. With `open` both chemoreceptor floors are 0.
+fn scent_inputs(chemo: f32, x: f32, open: bool) -> [f32; 3] {
+    let mut w = World::new(1, 1536.0, 1024.0);
+    w.params.set(id::THINK_EVERY, 1.0);
+    if open {
+        w.params.set(id::CHEMO_FLOOR, 0.0);
+        w.params.set(id::CHEMO_LEVEL_FLOOR, 0.0);
+    }
+    for k in 0..20 {
+        let s = w.plants.slots.alloc().expect("plant slot") as usize;
+        let (dx, dy) = ((k % 5) as f32 * 6.0 - 12.0, (k / 5) as f32 * 6.0 - 9.0);
+        (
+            w.plants.x[s],
+            w.plants.y[s],
+            w.plants.reserve[s],
+            w.plants.cap[s],
+        ) = (1000.0 + dx, 500.0 + dy, 20.0, 20.0);
+    }
+    w.plants.dirty = true;
+    w.run(800);
+    let mut g = Genome::founder(&mut Rng::new(1), &w.params);
+    g.set_size(KIND_CHEMO, chemo);
+    let at = SpawnAt {
+        x,
+        y: 500.0,
+        heading: 0.0,
+        growth: 1.0,
+        energy01: 1.0,
+        parent: 0,
+        generation: 0,
+        mark: 0,
+    };
+    let c = w.spawn(g, at).expect("slot") as usize;
+    w.tick();
+    w.brains.inputs_mut(c)[N_BODY_IN..][..3]
+        .try_into()
+        .expect("3 scent inputs")
+}
+
+/// A small receptor reads a weaker signal than a large one in the same scent, and below its floor
+/// it reads exactly 0. A brain weight times 0 is 0, so no weight buys the signal back.
+#[test]
+fn a_small_chemoreceptor_reads_a_signal_no_weight_can_amplify() {
+    let large = scent_inputs(1.0, 800.0, false);
+    let small = scent_inputs(0.1, 800.0, false);
+    assert!(large[1] > 0.5, "large receptor, gradient {}", large[1]);
+    assert_eq!(small, [0.0; 3], "small receptor");
+
+    // With the floors at 0 the small receptor reads the same gradient, only weaker: a weight of 10
+    // would make it as strong as the large one. The floor is what stops that.
+    let open = scent_inputs(0.1, 800.0, true);
+    assert!(open[1] > 0.05 && open[1] < large[1], "{open:?}");
+}
+
+/// The level input in the middle of a rich patch: a founder-size receptor reads food, and the floor
+/// takes level off a small one. (A small receptor reads 0 on one plant of a grazed world: see
+/// `a_body_with_no_chemoreceptor_has_no_scent_input`.)
+#[test]
+fn the_level_floor_takes_level_off_a_small_chemoreceptor() {
+    let founder = scent_inputs(0.5, 1000.0, false);
+    let small = scent_inputs(0.1, 1000.0, false);
+    let open = scent_inputs(0.1, 1000.0, true);
+    assert!(founder[0] > 0.1, "founder level {}", founder[0]);
+    assert!(small[0] < open[0], "{small:?} against {open:?}");
+}
+
+#[test]
+fn a_founder_size_chemoreceptor_still_reads_a_gradient_at_200_units() {
+    let founder = scent_inputs(0.5, 800.0, false);
+    assert!(founder[1] > 0.0, "founder gradient {}", founder[1]);
 }
 
 #[test]
@@ -602,6 +680,49 @@ fn an_undeclared_trigger_never_fires() {
     }
     assert!(w.creatures.cmd_dash[d] > 0.9);
     assert!(w.creatures.cd_dash[d] > 0, "the declared dash fires");
+}
+
+/// Finding 8 of the parts audit: the dash pushes along the heading, so only a flagellum that pushes
+/// declares it. A rear flagellum dashes. One at an anchor of 0.5 or less gives no push and no dash.
+#[test]
+fn only_a_forward_push_declares_the_dash() {
+    let open = OutGene {
+        node: Node::body(OUT_DASH),
+        bias: 3.0,
+        alpha: 1.0,
+    };
+    let anchors = [1.0, 0.75, 0.5, 0.25, 0.0];
+    let mut w = still_world();
+    armed(&mut w);
+    let mut slots = Vec::new();
+    for (k, anchor) in anchors.into_iter().enumerate() {
+        let mut g = Genome::default();
+        g.parts
+            .iter_mut()
+            .find(|part| part.kind == KIND_FLAGELLUM)
+            .expect("the founder flagellum")
+            .anchor = anchor;
+        g.brain.outs.push(open.clone());
+        slots.push(put(&mut w, g, 200.0 + 200.0 * k as f32, 500.0, 0.0));
+    }
+    for _ in 0..10 {
+        w.tick();
+    }
+    for (s, anchor) in slots.into_iter().zip(anchors) {
+        let pushes = anchor > 0.5;
+        assert_eq!(
+            w.brains.output(s, OUT_DASH) != UNDECLARED,
+            pushes,
+            "anchor {anchor}"
+        );
+        assert_eq!(w.creatures.cd_dash[s] > 0, pushes, "anchor {anchor}");
+        let declared = brain::ports(&w.genomes[s]).outputs;
+        assert_eq!(
+            declared.contains(&Node::body(OUT_DASH)),
+            pushes,
+            "anchor {anchor}"
+        );
+    }
 }
 
 #[test]

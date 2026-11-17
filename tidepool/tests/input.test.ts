@@ -116,15 +116,15 @@ test('a key for an ability that the body lacks does nothing', () => {
   expect(steerFromKeys({ ...toxin, dash: true }, ABILITY_DASH).abilities).toBe(ABILITY_DASH);
 });
 
-test('the parts of a body give its abilities', () => {
+test('the parts and the frame flags of a body give its abilities', () => {
   const part = (kind: number) => ({ kind, anchor: 0, size: 1, extra: 0 });
-  expect(abilitiesOf([])).toBe(0);
-  expect(abilitiesOf([part(P.KIND_FLAGELLUM), part(P.KIND_FILTER), part(P.KIND_EYE)])).toBe(
-    ABILITY_DASH,
-  );
+  expect(abilitiesOf([], 0)).toBe(0);
+  // The dash is the core's word: `FLAG_CAN_DASH`, not the parts.
+  expect(abilitiesOf([part(P.KIND_FLAGELLUM)], 0)).toBe(0);
+  expect(abilitiesOf([part(P.KIND_FILTER), part(P.KIND_EYE)], P.FLAG_CAN_DASH)).toBe(ABILITY_DASH);
   // A jaw gives no ability of its own: it makes the dash a strike.
-  expect(abilitiesOf([part(P.KIND_JAW)])).toBe(0);
-  expect(abilitiesOf([part(P.KIND_TOXIN), part(P.KIND_FLAGELLUM), part(P.KIND_JAW)])).toBe(ALL);
+  expect(abilitiesOf([part(P.KIND_JAW)], 0)).toBe(0);
+  expect(abilitiesOf([part(P.KIND_TOXIN), part(P.KIND_JAW)], P.FLAG_CAN_DASH)).toBe(ALL);
 });
 
 test('the page counts the cooldown from its own press, and only from a press that it posts', () => {
