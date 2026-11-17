@@ -87,3 +87,29 @@ O1 is aimed at the middle: a jawed grazer loses grazing, so it should go one way
 At 0.3 a founder jaw of 0.5 keeps 87% of its Filter. Expected: omnivores fall under 0.50 on seeds
 1, 5, 8 (0.52 to 0.54 at the head), and carnivores stay near the head's 0.15 to 0.23. The hunter
 share is not O1's job: it may stay over 0.8 on seeds 5 and 8.
+
+### T4 rows
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.937 | 0.063 | 0.000 | 0.653 | misses (carn) |
+| 4 | 0.925 | 0.075 | 0.000 | 0.267 | misses (carn) |
+| 5 | 0.493 | 0.424 | 0.083 | 0.859 | misses (carn, hunters) |
+| 6 | 0.941 | 0.059 | 0.000 | 0.290 | misses (carn) |
+| 8 | 0.940 | 0.060 | 0.000 | 0.166 | misses (carn) |
+
+0 of 5. **O1 alone, even at 0.3, keeps carnivores from evolving on 4 of 5 seeds.** Kills fall from
+about 700 at 12,000 to under 60 by 36,000 (seed 1), as in T1 and T2. The expectation is falsified.
+
+**What T1 to T4 show together.** In this world carnivores do not arrive with the founders: the
+founder hunters fade by 36,000, and carnivores evolve late (the head's seed 1: 0.016 at 36,000,
+0.147 at 144,000) by a climb from jawed grazers through the middle. Each rule cuts the climb:
+O1 taxes the middle step, I1 taxes the payoff of the hunt. The head is already close on seeds 1,
+5 and 8 (omnivores 0.52 to 0.54, carnivores in band). Log: `rows/takeover-T4.log`.
+
+## T5: both rules light (`interference` 0.1 at radius 16, `jaw_filter_cost` 0.1): hypothesis before the run
+
+A small dose that trims the middle and caps the hunter share without cutting the climb. Expected:
+carnivores at or near the head's (0.15 to 0.23 on seeds 1, 5, 8), omnivores 0.02 to 0.05 lower,
+under 0.50 on two of those seeds; hunter peak under 0.8 on seed 5 or 8. If carnivores still
+vanish, no dose of these two rules keeps the climb, and the target needs a different rule.
