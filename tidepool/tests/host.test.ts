@@ -617,8 +617,10 @@ test('a death by the rules of the core pauses the world, and `speed` resumes it'
 });
 
 // The rules decide this test, not the path of one seed. Every founder buds on its first tick, lives
-// 1,200 ticks, and pays no upkeep, and no bite takes. So the body buds marked children at once,
-// nothing starves or is eaten, and the body dies of old age while children that are younger than it are alive.
+// 1,200 ticks, and pays no upkeep. So the body buds marked children at once, nothing starves, and the
+// body dies of old age while children that are younger than it are alive. Bites are off: a rule that
+// changed the brains (#1684, the dash output) moved the seed path, and the body was eaten before
+// tick 580.
 test('picking an heir resumes the world in that body', () => {
   const r = rig({ recycle: true });
   const params = [

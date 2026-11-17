@@ -116,31 +116,15 @@ test('a key for an ability that the body lacks does nothing', () => {
   expect(steerFromKeys({ ...toxin, dash: true }, ABILITY_DASH).abilities).toBe(ABILITY_DASH);
 });
 
-test('the parts of a body give its abilities', () => {
-  const part = (kind: number, anchor = 0) => ({ kind, anchor, size: 1, extra: 0 });
-  const rear = part(P.KIND_FLAGELLUM, 1);
-  expect(abilitiesOf([])).toBe(0);
-  expect(abilitiesOf([rear, part(P.KIND_FILTER), part(P.KIND_EYE)])).toBe(ABILITY_DASH);
+test('the parts and the frame flags of a body give its abilities', () => {
+  const part = (kind: number) => ({ kind, anchor: 0, size: 1, extra: 0 });
+  expect(abilitiesOf([], 0)).toBe(0);
+  // The dash is the core's word: `FLAG_CAN_DASH`, not the parts.
+  expect(abilitiesOf([part(P.KIND_FLAGELLUM)], 0)).toBe(0);
+  expect(abilitiesOf([part(P.KIND_FILTER), part(P.KIND_EYE)], P.FLAG_CAN_DASH)).toBe(ABILITY_DASH);
   // A jaw gives no ability of its own: it makes the dash a strike.
-  expect(abilitiesOf([part(P.KIND_JAW)])).toBe(0);
-  expect(abilitiesOf([part(P.KIND_TOXIN), rear, part(P.KIND_JAW)])).toBe(ALL);
-});
-
-test('only a flagellum that pushes forward gives a dash', () => {
-  const flagellum = (anchor: number, size = 1) => ({
-    kind: P.KIND_FLAGELLUM,
-    anchor,
-    size,
-    extra: 0,
-  });
-  expect(abilitiesOf([flagellum(0.75)])).toBe(ABILITY_DASH);
-  // At the middle, and forward of it, a flagellum works across the body and gives no push.
-  expect(abilitiesOf([flagellum(0.5)])).toBe(0);
-  expect(abilitiesOf([flagellum(0.25)])).toBe(0);
-  expect(abilitiesOf([flagellum(0)])).toBe(0);
-  expect(abilitiesOf([flagellum(1, 0)])).toBe(0);
-  // One rear flagellum is enough.
-  expect(abilitiesOf([flagellum(0.5), flagellum(1)])).toBe(ABILITY_DASH);
+  expect(abilitiesOf([part(P.KIND_JAW)], 0)).toBe(0);
+  expect(abilitiesOf([part(P.KIND_TOXIN), part(P.KIND_JAW)], P.FLAG_CAN_DASH)).toBe(ALL);
 });
 
 test('the page counts the cooldown from its own press, and only from a press that it posts', () => {

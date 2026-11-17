@@ -39,6 +39,8 @@ pub const FLAG_BIT: u32 = 128;
 pub const FLAG_HURT: u32 = 256;
 /// The body dashed in the last `DASH_FLASH` ticks.
 pub const FLAG_DASH: u32 = 512;
+/// The body declares the dash output: a flagellum that pushes along the heading (`flag_push` above 0).
+pub const FLAG_CAN_DASH: u32 = 1024;
 /// A body this far outside the view is still in the frame, so a body on the edge is drawn whole.
 const MARGIN: f32 = 32.0;
 /// Ticks that `FLAG_BUDDED` stays set after a bud.
@@ -244,6 +246,9 @@ pub fn write(world: &mut World, x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
         if just_fired(c.cd_dash[s], ability_cooldown) {
             flags |= FLAG_DASH;
         }
+        if c.flag_push[s] > 0.0 {
+            flags |= FLAG_CAN_DASH;
+        }
         let hidden = brains.n_neur[s] - brains.n_in[s] - brains.n_out[s];
         let brain = hidden as u32 | (brains.n_conn[s] as u32) << 16;
         frame.extend(floats.map(f32::to_bits));
@@ -310,7 +315,7 @@ pub fn write(world: &mut World, x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
 mod tests {
     use super::*;
     use crate::eye::EYE_REACH;
-    use crate::genome::Genome;
+    use crate::genome::{Genome, KIND_FLAGELLUM};
     use crate::world::SpawnAt;
 
     const HEADER: usize = HEADER_WORDS as usize;
@@ -323,6 +328,11 @@ mod tests {
             .iter()
             .find(|r| r[8] == slot)
             .expect("the slot is in the frame")
+    }
+
+    /// The flags of the creature in `slot`, without `FLAG_CAN_DASH`, which every founder has.
+    fn flags_of(w: &World, slot: u32) -> u32 {
+        record(w, slot)[9] & !FLAG_CAN_DASH
     }
 
     #[test]
@@ -370,7 +380,8 @@ mod tests {
         assert_eq!(r[..6], floats.map(f32::to_bits));
         assert!((f32::from_bits(r[6]) - 0.75).abs() < 1e-6);
         // A founder accepts a mate from its first thought.
-        assert_eq!(r[7..10], [c.uid[4], 4, FLAG_WILLING]);
+        assert_eq!(r[7..9], [c.uid[4], 4]);
+        assert_eq!(r[9], FLAG_WILLING | FLAG_CAN_DASH);
         // A founder brain: 4 hidden neurons and 65 connections.
         assert_eq!(r[10], 4 | 65 << 16);
         assert!(c.heading[4] != 0.0 && c.length(4) > c.width(4));
@@ -387,13 +398,13 @@ mod tests {
         w.creatures.growth[11] = 0.5;
         view(&mut w);
         assert_eq!(w.frame[5..7], [9, 1]);
-        assert_eq!(record(&w, 7)[9], FLAG_LINEAGE);
+        assert_eq!(flags_of(&w, 7), FLAG_LINEAGE);
         assert_eq!(
-            record(&w, 9)[9],
+            flags_of(&w, 9),
             FLAG_LINEAGE | FLAG_POSSESSED | FLAG_JUVENILE
         );
-        assert_eq!(record(&w, 11)[9], FLAG_JUVENILE);
-        assert_eq!(record(&w, 0)[9], 0);
+        assert_eq!(flags_of(&w, 11), FLAG_JUVENILE);
+        assert_eq!(flags_of(&w, 0), 0);
 
         w.input(true, 0.0, 0.0, false, 0);
         view(&mut w);
@@ -402,7 +413,7 @@ mod tests {
         w.release();
         view(&mut w);
         assert_eq!(w.frame[5..7], [NO_SLOT, 0]);
-        assert_eq!(record(&w, 9)[9], FLAG_LINEAGE | FLAG_JUVENILE);
+        assert_eq!(flags_of(&w, 9), FLAG_LINEAGE | FLAG_JUVENILE);
     }
 
     #[test]
@@ -426,9 +437,9 @@ mod tests {
         };
         assert_eq!(w.spawn(Genome::default(), at), Some(50));
         write(&mut w, 0.0, 0.0, 1536.0, 1024.0);
-        let flags = [4, 5, 6, 7].map(|slot| record(&w, slot)[9]);
+        let flags = [4, 5, 6, 7].map(|slot| flags_of(&w, slot));
         assert_eq!(flags, [FLAG_MIXED, FLAG_WILLING, FLAG_DONOR, 0]);
-        assert_eq!(record(&w, 50)[9..11], [0, 0]);
+        assert_eq!(record(&w, 50)[9..11], [FLAG_CAN_DASH, 0]);
     }
 
     #[test]
@@ -598,7 +609,7 @@ mod tests {
         ] {
             w.creatures.bud_cooldown[4] = left;
             view(&mut w);
-            assert_eq!(record(&w, 4)[9], flag, "{left} ticks left");
+            assert_eq!(flags_of(&w, 4), flag, "{left} ticks left");
         }
     }
 
@@ -734,6 +745,53 @@ mod tests {
         ] {
             w.creatures.cd_dash[7] = left;
             assert_eq!(flags(&mut w, 7), flag, "{left} ticks left");
+        }
+    }
+
+    #[test]
+    fn only_a_body_that_declares_the_dash_has_the_can_dash_flag() {
+        let mut w = World::new(5, 1536.0, 1024.0);
+        let at = |x: f32| SpawnAt {
+            x,
+            y: 500.0,
+            heading: 0.0,
+            growth: 1.0,
+            energy01: 0.5,
+            parent: 0,
+            generation: 0,
+            mark: 0,
+        };
+        let with_anchor = |anchor: f32| {
+            let mut g = Genome::default();
+            let flagellum = g.parts.iter_mut().find(|p| p.kind == KIND_FLAGELLUM);
+            flagellum.expect("the founder flagellum").anchor = anchor;
+            g
+        };
+        // The anchor 0.5 and the size under 1/510 are where a page that rounds the part word
+        // disagrees with the core.
+        let mut tiny = with_anchor(1.0);
+        tiny.set_size(KIND_FLAGELLUM, 0.001);
+        let mut bare = with_anchor(1.0);
+        bare.parts.retain(|p| p.kind != KIND_FLAGELLUM);
+        let bodies = [
+            (with_anchor(1.0), true),
+            (with_anchor(0.5), false),
+            (with_anchor(0.25), false),
+            (tiny, true),
+            (bare, false),
+        ];
+        let slots: Vec<u32> = bodies
+            .iter()
+            .enumerate()
+            .map(|(k, (g, _))| {
+                w.spawn(g.clone(), at(100.0 + 100.0 * k as f32))
+                    .expect("slot")
+            })
+            .collect();
+        write(&mut w, 0.0, 0.0, 1536.0, 1024.0);
+        for (&slot, (_, declares)) in slots.iter().zip(&bodies) {
+            let flags = record(&w, slot)[9];
+            assert_eq!(flags & FLAG_CAN_DASH != 0, *declares, "slot {slot}");
         }
     }
 
