@@ -124,12 +124,12 @@ pub const WID_RANGE: (f32, f32) = (0.3, 0.9);
 pub const EGG_RANGE: (f32, f32) = (0.2, 0.7);
 pub const OLD_RANGE: (f32, f32) = (1200.0, 9600.0);
 pub const DIET_RANGE: (f32, f32) = (0.0, 1.0);
-/// By kind. The four M1 kinds keep their M1 ranges.
+/// By kind. A size of 0 is a part that does nothing and weighs nothing, so a Filter can be shed.
 pub const SIZE_RANGE: [(f32, f32); KINDS as usize + 1] = [
     (0.0, 0.0),
     (0.0, 1.0),
     (0.0, 1.0),
-    (0.2, 1.0),
+    (0.0, 1.0),
     (0.0, 1.0),
     (0.0, 1.0),
     (0.0, 1.0),
