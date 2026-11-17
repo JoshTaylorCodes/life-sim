@@ -41,6 +41,12 @@ the outputs thrust, turn, and accept are free; only the wires that use them cost
    off the midline makes two cones or guards, each with the full size, while the mass counts it once
    (`creature.rs` the expression of pairs; `motor.rs` the jaw cones). A jaw that mutates off the nose
    can double its bite. Fix: half the size per cone of a pair.
+   **Fixed (#1677):** each cone or guard of a pair has half of the gene's size, so a pair bites,
+   sees, hurts, and blocks as one midline part of that size, spread over two arcs (`tests/pairs.rs`).
+   The sums and the mass still count the whole size once. A midline part is unchanged. The
+   founder's eye, a pair, rose from `founder_eye` 0.2 to 0.4: its cones see as far as before, and
+   the founder now pays mass for both of them. The page draws each side of such a pair at half
+   the size too (`src/render/parts.ts` `sideSize`), so a founder looks as it did.
 2. **Turning costs no energy.** Upkeep reads thrust only (`energy.rs` `life`), so side flagella,
    cilia, and fins turn for their mass alone. Fix: a `turn_cost` on the turn command.
 3. **Ability costs grow with the body's area, their effect with the part's size** (`ability.rs`). A

@@ -537,7 +537,7 @@ mod tests {
     #[test]
     fn the_header_holds_the_cones_of_the_possessed_body() {
         let mut w = World::new(5, 1536.0, 1024.0);
-        w.params.set(id::FOUNDER_EYE, 0.2);
+        w.params.set(id::FOUNDER_EYE, 0.4);
         w.seed_founders(50, 0);
         let view = |w: &mut World| write(w, 0.0, 0.0, 1536.0, 1024.0);
         view(&mut w);
@@ -579,7 +579,7 @@ mod tests {
     #[test]
     fn the_cones_of_a_juvenile_are_as_long_as_its_eyes_see() {
         let mut w = World::new(5, 1536.0, 1024.0);
-        w.params.set(id::FOUNDER_EYE, 0.2);
+        w.params.set(id::FOUNDER_EYE, 0.4);
         w.seed_founders(50, 0);
         w.creatures.growth[9] = 0.5;
         assert!(w.possess(w.creatures.uid[9]));

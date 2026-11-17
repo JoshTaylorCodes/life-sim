@@ -105,7 +105,7 @@ test('the frame header holds the lineage count, the buds, and the cones of the p
   const sim = fresh();
   const eye = sim.params().find((p) => p.name === 'founder_eye');
   if (!eye) throw new Error('no parameter founder_eye');
-  sim.setParam(eye.index, 0.2);
+  sim.setParam(eye.index, 0.4);
   sim.seedFounders(300, 0);
   const buf = new ArrayBuffer(4 * (P.FRAME_HEADER_WORDS + 300 * P.CREATURE_STRIDE));
   sim.writeFrame(0, 0, 1536, 1024, buf);

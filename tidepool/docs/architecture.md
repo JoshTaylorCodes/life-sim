@@ -144,7 +144,8 @@ native binary is dropped. M0 answers this.
   `anchor`, a `size`, an `extra`, and a history id. The kinds are Flagellum, Cilia, Filter,
   Chemoreceptor, Fin, and Eye, numbered 1 to 6. The anchor runs from 0 at the nose to 1 at the tail.
   An anchor of exactly 0 or 1 is on the midline and makes one part. Any other value makes a mirrored
-  pair, and the size counts once. Sizes run from 0 to 1. A Filter of size 0 eats nothing, weighs nothing, and is not drawn. Only an Eye
+  pair, and the size counts once. Each eye cone, jaw cone, and guard of a pair has half of the size.
+  Sizes run from 0 to 1. A Filter of size 0 eats nothing, weighs nothing, and is not drawn. Only an Eye
   reads `extra`, which sets the width of its cone.
 - Only two kinds use their place. A Flagellum splits its size into push, by `push_of(anchor)`, and
   turning, by `side_of(anchor)`. An Eye turns its anchor into the angle of its cone from the

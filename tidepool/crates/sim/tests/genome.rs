@@ -200,8 +200,9 @@ fn an_eye_makes_a_pair_of_cones_and_a_midline_eye_makes_one() {
     assert_eq!(c.n_eyes[s], 4);
     let pi = std::f32::consts::PI;
     let cones = [
-        (0.2 * pi, 0.6f32, 0.3),
-        (-0.2 * pi, 0.6, 0.3),
+        // Each cone of the pair has half of its gene's size.
+        (0.2 * pi, 0.6f32, 0.15),
+        (-0.2 * pi, 0.6, 0.15),
         (0.0, 0.2, 0.5),
         (pi, 1.2, 0.1),
     ];

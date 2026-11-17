@@ -20,7 +20,8 @@ use tidepool_sim::world::{SpawnAt, World};
 const AT: (f32, f32) = (700.0, 500.0);
 /// The middle of the founder's cone on the side of positive angles.
 const SIDE: f32 = FOUNDER_EYE_ANCHOR * PI;
-/// The range of the founder's eye on the reference body: `eye_range * size * length`.
+/// The range of each cone of the founder's eye on the reference body: `eye_range * size * length`.
+/// Each cone of the pair has half of the founder's size of 0.4.
 const RANGE: f32 = 16.0 * 0.2 * 12.0;
 /// The history id of the eye gene of `eyed`. It owns the ports of that eye.
 const EYE: u32 = 900;
@@ -74,7 +75,7 @@ fn eye_ports(g: &Genome) -> Vec<Node> {
 
 /// The reference body with the founder's eye.
 fn founder_eyed() -> Genome {
-    eyed(FOUNDER_EYE_ANCHOR, 0.2)
+    eyed(FOUNDER_EYE_ANCHOR, 0.4)
 }
 
 /// The point `d` units from the viewer, `angle` radians from its heading.
@@ -227,8 +228,8 @@ fn a_midline_eye_declares_three_inputs() {
 fn a_body_with_two_eye_genes_has_twelve_eye_inputs_and_each_cone_feeds_its_own() {
     // Two pairs. A cone is 0.7 radians to each side of its middle, so the two cones of one side
     // overlap, and the middle of each is outside the other. In M2 both fed one input.
-    let mut g = eyed(0.2, 0.2);
-    g.parts.push(eye_gene(EYE + 1, 0.6, 0.2));
+    let mut g = eyed(0.2, 0.4);
+    g.parts.push(eye_gene(EYE + 1, 0.6, 0.4));
     let of = |owner: u32| {
         [
             EYE_FOOD_A, EYE_BODY_A, EYE_JAW_A, EYE_FOOD_B, EYE_BODY_B, EYE_JAW_B,
@@ -269,7 +270,7 @@ fn an_eye_gene_past_max_eyes_declares_nothing() {
     // Five pairs are 10 cones. `express` makes 8, so the fifth gene has no cone and no port.
     let mut g = Genome::default();
     for k in 0..5 {
-        g.parts.push(eye_gene(EYE + k, 0.1 + 0.15 * k as f32, 0.2));
+        g.parts.push(eye_gene(EYE + k, 0.1 + 0.15 * k as f32, 0.4));
     }
     let ports = eye_ports(&g);
     assert_eq!(ports.len(), 3 * MAX_EYES);
@@ -279,7 +280,7 @@ fn an_eye_gene_past_max_eyes_declares_nothing() {
     // cone and keeps its ports. Its mirror is not made and declares none, and so does the sixth.
     let mut g = Genome::default();
     for (k, anchor) in [0.1, 0.3, 0.5, 0.0, 0.7, 0.9].into_iter().enumerate() {
-        g.parts.push(eye_gene(EYE + k as u32, anchor, 0.2));
+        g.parts.push(eye_gene(EYE + k as u32, anchor, 0.4));
     }
     let ports = eye_ports(&g);
     assert_eq!(ports.len(), 3 * MAX_EYES);
@@ -323,7 +324,7 @@ fn another_body_lights_the_body_input_and_the_viewer_does_not_see_itself() {
 fn a_larger_eye_and_a_longer_body_both_see_farther() {
     let far = [off(45.0, SIDE)];
     assert_eq!(sees_plants(founder_eyed(), &far)[1], 0.0);
-    assert!(sees_plants(eyed(FOUNDER_EYE_ANCHOR, 0.3), &far)[1] > 0.0);
+    assert!(sees_plants(eyed(FOUNDER_EYE_ANCHOR, 0.6), &far)[1] > 0.0);
     let mut long = founder_eyed();
     long.len = 18.0;
     assert!(sees_plants(long, &far)[1] > 0.0);
@@ -350,7 +351,7 @@ fn a_juvenile_sees_as_far_as_its_body_has_grown() {
 
 #[test]
 fn no_cone_is_longer_than_eye_reach() {
-    // `eye_range * size * length` is 384 for this body.
+    // `eye_range * size * length` is 192 for each cone of this body, of half the size 1.
     let mut g = eyed(FOUNDER_EYE_ANCHOR, 1.0);
     g.len = 24.0;
     assert_eq!(sees_plants(g.clone(), &[off(70.0, SIDE)])[1], 0.0);
@@ -414,7 +415,7 @@ fn closest(seed: u32, founder_eye: f32) -> f32 {
 fn a_founder_still_swims_to_a_plant_it_can_see() {
     let mut wins = 0;
     for seed in 1..=5 {
-        let (with_eyes, without) = (closest(seed, 0.2), closest(seed, 0.0));
+        let (with_eyes, without) = (closest(seed, 0.4), closest(seed, 0.0));
         assert!(
             with_eyes < 4.0,
             "seed {seed}: came no closer than {with_eyes} to the plant"
@@ -499,7 +500,7 @@ fn a_world_with_eyes_is_the_same_in_a_reload() {
     let start = || {
         let mut w = World::new(1, 1536.0, 1024.0);
         w.params.set(id::SCENT_DEPOSIT, 0.0);
-        w.params.set(id::FOUNDER_EYE, 0.2);
+        w.params.set(id::FOUNDER_EYE, 0.4);
         w.params.set(id::SEE_EVERY, 2.0);
         w.seed_founders(400, 1200);
         w
