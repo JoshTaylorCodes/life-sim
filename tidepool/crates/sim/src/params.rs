@@ -295,6 +295,12 @@ table! {
     /// Rule D2 of the diet retune, a food chain: a body bites only a body whose `diet` is at least
     /// this much under its own. −1: any body, the M4 world.
     BITE_DIET_GAP "bite_diet_gap" 0.2 -1.0 1.0;
+    /// Rule I1, predator interference: a bite is divided by `1 + interference * n`, where `n`
+    /// counts the other bodies with a jaw within `interference_radius` of the biter. At 0.3 three
+    /// hunters near cut a bite about in half. 0: off.
+    INTERFERENCE "interference" 0.3 0.0 2.0;
+    /// Rule I1: the distance, centre to centre, inside which a body with a jaw counts.
+    INTERFERENCE_RADIUS "interference_radius" 48.0 0.0 128.0;
     /// Rule G1 of the parts plan, two guts cost upkeep: a body pays this fraction of its own basal
     /// cost, times a bump of its `diet` (see `gut_band`), for keeping two digestive systems. At 0.5
     /// of `diet` the bump is 1. 0: off.
