@@ -227,3 +227,26 @@ For the owner:
 
 - `m2-world.tdpl`: tick 36,000, 1,605 creatures, 2,229 plants, 566 debris, hash `12fc664d`. The page opens on it.
 - `m2-world-long.tdpl`: tick 144,000, 1,242 creatures, 2,229 plants, 554 debris, hash `6c256efc`.
+
+## After #1707 (`f3444255`): the gates and the diet at the head that ships
+
+#1707 clamps a chemoreceptor's gradient at its own size (a converge gap, a fix to #1685), after
+the reading above. 2026-11-17, 02:46 onward, load 8 to 11. Logs: `rows/gates-f3444255.log`,
+`rows/probe-diet-f3444255.log`.
+
+- `make check` exit 0. `gate-health` 3/3.
+- `gate-evolve` **1/3** (it read 3/3 at `75d5d3c3`): eye gap −0.017 on seed 1, 0.050 on seed 3.
+- Long gate **2/5** (seeds 6 and 8 pass; at `75d5d3c3` seeds 1 and 4 did). Seed 1: the hunt dies and
+  the chemo gap fails (−0.006). Seed 4: `flesh_late` 0.009, `carn_hi` 0.009. Seed 5: chemo gap 0.040.
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.945 | 0.055 | 0.000 | 0.320 | misses (carn) |
+| 4 | 0.916 | 0.075 | 0.009 | 0.432 | misses (carn) |
+| 5 | 0.619 | 0.346 | 0.035 | 0.916 | misses (carn, hunters) |
+| 6 | 0.676 | 0.243 | 0.081 | 0.683 | misses (carn) |
+| 8 | 0.255 | 0.557 | 0.187 | 0.851 | misses (omni, hunters) |
+
+At 36,000 on seed 1 (the page's world): hunters 0.484. A one-line rule fix moved the 36,000 gate
+from 3/3 to 1/3 and swapped which seeds pass the long gate: the same path sensitivity the trials
+showed. Five seeds read a world's luck as much as its rules.
