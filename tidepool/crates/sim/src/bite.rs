@@ -41,10 +41,11 @@ pub(crate) fn side(y: f32) -> f32 {
 /// of this tick after the motor, block a share of it (shells). What `j` loses `s` gains. The guards
 /// that hold `s` also hurt it (spikes) in proportion to what the bite took, so a bite a shell
 /// blocked whole costs `s` nothing to a spike. What a spike hurts is lost. The bite is divided by
-/// `1 + interference * n`, where `n` counts the other live bodies with a `jaw_sum` over 0 whose
-/// centre is within `interference_radius` of that of `s` (rule I1, predator interference). The
-/// creature grid is that of the start of the tick and bodies have moved by at most `v_max` since,
-/// so the count reads the grid that far past the radius. A count is the same in any order.
+/// `1 + interference * n`, where `n` counts the other live bodies but the bitten one with a
+/// `jaw_sum` over 0 whose centre is within `interference_radius` of that of `s` (rule I1, predator
+/// interference). The creature grid is that of the start of the tick and bodies have moved by at
+/// most `v_max` since, so the count reads the grid that far past the radius. A count is the same in
+/// any order.
 ///
 /// A body taken to 0 or less is killed after the loop, in slot order: a bitten body with
 /// `CAUSE_EATEN` and a biter with `CAUSE_SPIKED`, each killed by the other.
@@ -102,7 +103,7 @@ pub fn step(world: &mut World) {
                 let k = k as usize;
                 let (dx, dy) = (c.x[k] - x, c.y[k] - y);
                 let near = dx * dx + dy * dy <= crowd_r * crowd_r;
-                if k != s && near && c.jaw_sum[k] > 0.0 && c.slots.is_alive(k as u32) {
+                if k != s && k != j && near && c.jaw_sum[k] > 0.0 && c.slots.is_alive(k as u32) {
                     n += 1;
                 }
             });

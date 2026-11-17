@@ -446,6 +446,23 @@ fn two_hunters_near_divide_the_bite_by_1_plus_2_interference() {
     assert!((crowded - 3.0 / 1.6).abs() < 1e-5, "{crowded}");
 }
 
+/// The bitten body is the target, not a rival: its own jaw does not count.
+#[test]
+fn the_bitten_bodys_own_jaw_does_not_count() {
+    let take = |interference: f32| {
+        let (mut w, s, j) = pair(jaw);
+        w.params.set(id::INTERFERENCE, interference);
+        w.params.set(id::INTERFERENCE_RADIUS, 48.0);
+        let ej = w.creatures.energy[j];
+        w.run(1);
+        assert_eq!(w.motor.bite_target[s] as usize, j);
+        ej - w.creatures.energy[j]
+    };
+    let (on, off) = (take(0.3), take(0.0));
+    assert!(on > 0.0, "{on}");
+    assert_eq!(on.to_bits(), off.to_bits());
+}
+
 #[test]
 fn a_hunter_outside_the_radius_does_not_count() {
     let (take, _, _) = bite_among_hunters(0.3, &[47.0, -49.0]);
