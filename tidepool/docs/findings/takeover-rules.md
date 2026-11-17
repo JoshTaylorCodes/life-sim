@@ -225,8 +225,13 @@ For the owner:
 
 `75d5d3c3` core, snapshot format 19, `run --seed 1 --creatures 400 --plants 1200`:
 
-- `m2-world.tdpl`: tick 36,000, 1,605 creatures, 2,229 plants, 566 debris, hash `12fc664d`. The page opens on it.
+- `m2-world.tdpl`: tick 36,000, 1,605 creatures, 2,229 plants, 566 debris, hash `12fc664d`.
 - `m2-world-long.tdpl`: tick 144,000, 1,242 creatures, 2,229 plants, 554 debris, hash `6c256efc`.
+
+Superseded after #1707, at `f3444255` (the head that ships):
+
+- `m2-world.tdpl`: tick 36,000, 1,680 creatures, 2,229 plants, 634 debris, hash `63f77c89`. The page opens on it.
+- `m2-world-long.tdpl`: tick 144,000, 1,631 creatures, 2,229 plants, 450 debris, hash `584bbbaa`.
 
 ## After #1707 (`f3444255`): the gates and the diet at the head that ships
 
