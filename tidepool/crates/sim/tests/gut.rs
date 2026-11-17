@@ -14,6 +14,7 @@ fn paid(gut_upkeep: f32, diet: f32) -> f32 {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
         id::REPEL,
         id::PLANT_GROWTH,
         id::PLANT_SEED_CHANCE,

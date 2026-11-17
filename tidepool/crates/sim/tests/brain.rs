@@ -369,6 +369,7 @@ fn seeker(seed: u32, chemo: f32) -> f32 {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
         id::INTAKE_RATE,
     ] {
         w.params.set(k, 0.0);
@@ -478,6 +479,7 @@ fn still_world() -> World {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
         id::INTAKE_RATE,
         id::SCENT_DEPOSIT,
     ] {

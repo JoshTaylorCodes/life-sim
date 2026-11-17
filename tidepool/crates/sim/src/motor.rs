@@ -177,11 +177,7 @@ pub fn step(world: &mut World) {
         // A fin steers with the water that passes it, so it does nothing at rest or in reverse.
         // It reads the speed that the body had before this tick: a turn that waits for the new
         // velocity made a tick 5% slower in WASM.
-        let swim = c.vx[s] * hc + c.vy[s] * hs;
-        let steer = cilia_torque * c.cilia[s]
-            + flag_torque * c.flag_push[s] * thrust
-            + flag_torque * c.flag_side[s]
-            + fin_turn * c.fin[s] * swim.max(0.0);
+        let steer = steer(c, s, thrust, [cilia_torque, flag_torque, fin_turn]);
         let a_ang = turn * steer / (ref_inertia * length * heft[s]);
 
         let mut vx = c.vx[s] + hc * accel + push_x[s];
@@ -213,6 +209,18 @@ pub fn step(world: &mut World) {
         c.x[s] = x.clamp(0.0, *w);
         c.y[s] = y.clamp(0.0, *h);
     }
+}
+
+/// The turning that body `s` has at a full command: cilia, a side flagellum, a rear flagellum while
+/// it pushes, and a fin with the water that passes it. `torques` is cilia, flagellum, and fin per
+/// unit of part. `energy::life` charges for it.
+pub fn steer(c: &creature::Creatures, s: usize, thrust: f32, torques: [f32; 3]) -> f32 {
+    let [cilia_torque, flag_torque, fin_turn] = torques;
+    let swim = c.vx[s] * c.hc[s] + c.vy[s] * c.hs[s];
+    cilia_torque * c.cilia[s]
+        + flag_torque * c.flag_push[s] * thrust
+        + flag_torque * c.flag_side[s]
+        + fin_turn * c.fin[s] * swim.max(0.0)
 }
 
 /// Writes nothing: the motor's own state is scratch.

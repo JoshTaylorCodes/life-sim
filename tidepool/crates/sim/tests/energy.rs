@@ -75,6 +75,7 @@ fn no_upkeep(w: &mut World) {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
     ] {
         w.params.set(k, 0.0);
     }
@@ -723,5 +724,50 @@ fn thrust_costs_the_same_per_unit_of_mass() {
     assert!(
         (small / large - 1.0).abs() < 0.02,
         "{small} against {large}"
+    );
+}
+
+/// Two worlds with the same lone adult and no plants. The player holds a full turn in one and no
+/// turn in the other, with no thrust, so the two bodies differ only in what the turn costs.
+fn energy_after_turning(turn_cost: f32, turn: f32, ticks: u32) -> f32 {
+    let mut w = empty();
+    w.params.set(id::TURN_COST, turn_cost);
+    let c = add(&mut w, 500.0, 1.0, 0.9, |_| {});
+    assert!(w.possess(w.creatures.uid[c]));
+    w.input(true, 0.0, turn, false, 0);
+    w.run(ticks);
+    w.creatures.energy[c]
+}
+
+#[test]
+fn turning_costs_energy() {
+    const TICKS: u32 = 100;
+    let default_cost = {
+        let w = empty();
+        w.params.get(id::TURN_COST)
+    };
+    let (still, turning) = (
+        energy_after_turning(default_cost, 0.0, TICKS),
+        energy_after_turning(default_cost, 1.0, TICKS),
+    );
+
+    let w = empty();
+    let p = &w.params;
+    // The body of `add`: cilia 0.4 turn it at rest, and its adult length is 12.
+    let steer = p.get(id::CILIA_TORQUE) * 0.4;
+    let cost = default_cost * steer * 12.0 * TICKS as f32;
+    assert!(cost > 0.5, "the expected cost {cost} is too small to test");
+    assert!(
+        (still - turning - cost).abs() < 1e-2,
+        "turn cost {}, expected {cost}",
+        still - turning
+    );
+}
+
+#[test]
+fn at_turn_cost_0_a_turning_body_and_a_still_one_end_equal() {
+    assert_eq!(
+        energy_after_turning(0.0, 0.0, 100),
+        energy_after_turning(0.0, 1.0, 100)
     );
 }

@@ -4,7 +4,7 @@
 //! `(1 - diet)^diet_k` of its rate (rule D1 of the diet plan). A full creature
 //! takes nothing, and no bite takes a plant under its death reserve. Upkeep is paid for mass, for
 //! being a body, for each hidden neuron and each expressed connection of the brain, and for thrust,
-//! and a long `old` gene raises all of it. A juvenile with a reserve builds mass. A creature with
+//! and for thrust and turning, and a long `old` gene raises all of it. A juvenile with a reserve builds mass. A creature with
 //! no energy starves, and one at the age of its `old` gene dies.
 //!
 //! Mass is the area times the heft of the parts. Capacity is for area alone: parts are not stores.
@@ -13,6 +13,7 @@ use crate::control::{CAUSE_OLD_AGE, CAUSE_STARVED};
 use crate::debris::DEBRIS_RADIUS;
 use crate::genome::{REF_AREA, REF_WIDTH};
 use crate::math::{pow075, pow_quarters};
+use crate::motor;
 use crate::params::id;
 use crate::plant;
 use crate::snapshot::{LoadError, Reader, Writer};
@@ -100,7 +101,12 @@ pub fn life(world: &mut World) {
     let (flag_force, cilia_force) = (p.get(id::FLAG_FORCE), p.get(id::CILIA_FORCE));
     let (neuron_upkeep, conn_upkeep) = (p.get(id::NEURON_UPKEEP), p.get(id::CONN_UPKEEP));
     let (basal, fixed_upkeep) = (p.get(id::BASAL), p.get(id::FIXED_UPKEEP));
-    let move_cost = p.get(id::MOVE_COST);
+    let (move_cost, turn_cost) = (p.get(id::MOVE_COST), p.get(id::TURN_COST));
+    let torques = [
+        p.get(id::CILIA_TORQUE),
+        p.get(id::FLAG_TORQUE),
+        p.get(id::FIN_TORQUE) / p.get(id::V_MAX),
+    ];
     let per_mass = p.get(id::ENERGY_PER_MASS);
     let (grow_reserve, grow_rate) = (p.get(id::GROW_RESERVE), p.get(id::GROW_RATE));
     let (build_cost, grow_floor) = (p.get(id::BUILD_COST), p.get(id::GROW_FLOOR));
@@ -119,11 +125,13 @@ pub fn life(world: &mut World) {
         // The count stops at the top of its range: a snapshot can hold any age.
         c.age[s] = c.age[s].saturating_add(1);
 
-        let (area, growth, thrust) = (c.area(s), c.growth[s], c.cmd_thrust[s]);
+        let (area, growth) = (c.area(s), c.growth[s]);
+        let (thrust, turn) = (c.cmd_thrust[s], c.cmd_turn[s]);
         let mass = c.mass(s, part_mass, eye_cost);
         // Upkeep is paid for the mass to the power 3/4, so that a small body pays more for each
         // unit of its mass. The force of the motor follows the area, and so does its cost.
         let drive = flag_force * c.flag_push[s] + cilia_force * c.cilia[s];
+        let steer = motor::steer(c, s, thrust, torques);
         // A brain pays for what is hidden and for what is expressed. An input and an output are
         // free, so a sense does not pay for the neurons that it declares. A juvenile pays the
         // fixed upkeep in full.
@@ -134,7 +142,8 @@ pub fn life(world: &mut World) {
             + fixed_upkeep
             + neuron_upkeep * hidden as f32
             + conn_upkeep * brains.n_conn[s] as f32
-            + move_cost * thrust * thrust * drive * (area / REF_WIDTH);
+            + move_cost * thrust * thrust * drive * (area / REF_WIDTH)
+            + turn_cost * turn * turn * steer * (area / REF_WIDTH);
         // A life longer than the founder's costs more per tick, and a shorter one costs less.
         let upkeep = upkeep * (1.0 + old_cost * (c.old[s] / lifespan - 1.0));
         let mut energy = c.energy[s] - upkeep;
