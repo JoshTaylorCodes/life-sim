@@ -165,3 +165,40 @@ Log: `rows/takeover-T7.log`.
 The last trial. Measures the shipped set itself. A rule cannot ship off (constitution, 2026-11-16), and
 O1 cut the carnivores at every dose read (0.1 to 1.0), so it ships at 0.03 and its deletion goes to
 the owner. Expected: near T3 (carnivores on seeds 5 and 8, seed 5 in the diet bands), 0 or 1 of 5.
+
+### T8 rows
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.804 | 0.163 | 0.033 | 0.510 | misses (carn) |
+| 4 | 0.464 | 0.473 | 0.063 | 0.790 | misses (carn) |
+| 5 | 0.919 | 0.081 | 0.000 | 0.336 | misses (carn) |
+| 6 | 0.949 | 0.051 | 0.000 | 0.589 | misses (carn) |
+| 8 | 0.939 | 0.061 | 0.000 | 0.100 | misses (carn) |
+
+0 of 5. Log: `rows/takeover-T8.log`. A dose of 0.03 moved which seeds grow carnivores: 1 and 4
+now have some, 5 and 8 (which had them in T3) have none.
+
+## Verdict (the trial cap is spent)
+
+**The target is not met by any trial.** Seeds with carnivores at 0.10 or more: 3 of 5 with both
+rules off (the head, T6), **2 of 35** over the seven trials with a rule on. The rules suppress the
+carnivores. In this world a carnivore is not founded: it evolves late, by a climb from jawed grazers
+through the middle, and O1 taxes the middle step while I1 taxes the hunt's payoff. Both rules work
+against the end of the ladder they were meant to widen.
+
+**Which seeds keep carnivores is path noise at this sample size.** A change of 0.03 in one param
+moves carnivores from seeds 5 and 8 to seeds 1 and 4 (T3 against T8). Five seeds cannot tell a
+rule's effect from the path it happens to put a seed on, except at the extremes above.
+
+**The shipped set is T8's**: `interference` 0.3 at `interference_radius` 16 (bite reach, the only
+radius that kept the hunt), `jaw_filter_cost` 0.03 (`75d5d3c3`). A rule cannot ship off, and O1
+cut the carnivores at every dose read, so it ships at a token dose and **its deletion goes to the
+owner**. In the world the page opens on (seed 1 at 36,000) hunters are 0.36 of the living.
+
+For the owner:
+1. Delete O1, or keep it at 0.03. Recommended: delete. At every dose it hurts the target it was built for.
+2. The target needs carnivores that do not depend on a fragile climb. The levers the rows point to:
+   M6's zones as refuges (the decision of 2026-10-16), or more seeds per reading so a rule's effect
+   can be told from the path.
+3. `chemo_floor` (see `parts-batch.md`): one trial at 0 to isolate the chemoreceptor fall.
