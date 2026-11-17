@@ -18,6 +18,7 @@ import {
   FLAG_JUVENILE,
   FLAG_MIXED,
   KIND_CHEMO,
+  KIND_CILIA,
   KIND_EYE,
   KIND_FILTER,
   KIND_FIN,
@@ -65,6 +66,13 @@ export const hasMixedMark = (flags: number): boolean =>
 
 const MIDLINE = [1] as const;
 const PAIR = [1, -1] as const;
+// The kinds whose pair splits its size between its two sides in the core (`creature.rs` `sides`).
+const SPLIT = new Set([KIND_EYE, KIND_JAW, KIND_SPIKE, KIND_SHELL]);
+
+/** The size that each side of a part draws at: half of the gene's size for a split pair. */
+function sideSize({ kind, anchor, size }: Pick<Part, 'kind' | 'anchor' | 'size'>): number {
+  return SPLIT.has(kind) && anchor > 0 && anchor < 1 ? size / 2 : size;
+}
 
 // The numbers of the outline.
 const TAPER_FULL = 1 / 4; // one end this share ahead of the other narrows the other all the way
@@ -81,20 +89,23 @@ export const OUTLINE_FLOATS = OUTLINE_SWELLS + 2 * MAX_SWELLS;
 
 // The founder of crates/sim/src/genome.rs: FOUNDER_PARTS, then its eye at the default `founder_eye`.
 const FOUNDER = [
-  { anchor: 1, size: 0.6 },
-  { anchor: 0.5, size: 0.4 },
-  { anchor: 0, size: 0.6 },
-  { anchor: 0.15, size: 0.5 },
-  { anchor: 0.2, size: 0.2 },
+  { kind: KIND_FLAGELLUM, anchor: 1, size: 0.6 },
+  { kind: KIND_CILIA, anchor: 0.5, size: 0.4 },
+  { kind: KIND_FILTER, anchor: 0, size: 0.6 },
+  { kind: KIND_CHEMO, anchor: 0.15, size: 0.5 },
+  { kind: KIND_EYE, anchor: 0.2, size: 0.4 },
 ] as const;
 
-// The part size ahead of the middle of a body and behind it. A part counts for more the nearer it
-// is to an end.
-function carried(parts: readonly Pick<Part, 'anchor' | 'size'>[]): { nose: number; tail: number } {
+// The part size ahead of the middle of a body and behind it, at the size each side draws at. A part
+// counts for more the nearer it is to an end.
+function carried(parts: readonly Pick<Part, 'kind' | 'anchor' | 'size'>[]): {
+  nose: number;
+  tail: number;
+} {
   let nose = 0;
   let tail = 0;
-  for (const { anchor, size } of parts) {
-    const lever = size * Math.cos(anchor * Math.PI);
+  for (const part of parts) {
+    const lever = sideSize(part) * Math.cos(part.anchor * Math.PI);
     if (lever > 0) nose += lever;
     else tail -= lever;
   }
@@ -309,7 +320,7 @@ export function buildParts(
         out[o] = x + at.x * cos - at.y * sin;
         out[o + 1] = y + at.x * sin + at.y * cos;
         out[o + 2] = heading + at.angle;
-        out[o + 3] = (reach[0] + reach[1] * part.size) * scale;
+        out[o + 3] = (reach[0] + reach[1] * sideSize(part)) * scale;
         out[o + 4] = side * part.kind;
         out[o + 5] = hue;
         out[o + 6] = energy;

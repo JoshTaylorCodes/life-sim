@@ -219,15 +219,17 @@ pub fn radius(length: f32, width: f32) -> f32 {
     (length + width) / 4.0
 }
 
-/// The sine and the cosine of each direction of a part at `anchor`, which is held in 0 to 1: one on
-/// the midline, at 0 or 1, and a pair at plus and minus `anchor * PI` elsewhere.
-fn directions(anchor: f32) -> impl Iterator<Item = (f32, f32)> {
-    let midline = anchor == 0.0 || anchor == 1.0;
+/// Each side of a part at `anchor`, which is held in 0 to 1: its direction in radians from the
+/// heading and its share of `size`. One side on the midline, at 0 or 1, with the whole size, and a
+/// pair at plus and minus `anchor * PI` elsewhere, each with half of it (finding 1 of the parts
+/// audit): a pair gives what one part of its size gives, spread over two arcs.
+fn sides(anchor: f32, size: f32) -> impl Iterator<Item = (f32, f32)> {
+    let n = if anchor == 0.0 || anchor == 1.0 { 1 } else { 2 };
     let dir = anchor * PI;
     [dir, -dir]
         .into_iter()
-        .take(if midline { 1 } else { 2 })
-        .map(sin_cos)
+        .take(n)
+        .map(move |dir| (dir, size / n as f32))
 }
 
 /// The values of `a` at the live slots, in slot order.
@@ -250,7 +252,8 @@ impl Creatures {
     /// Sets every expressed array of the slot from the genome. Never panics, for any genome. Eye
     /// cones past `MAX_EYES` are not made, and their genes still count in `eye_sum`. Jaw cones and
     /// guards are made as eye cones are, at `anchor * PI` from the heading, one on the midline and a
-    /// pair elsewhere, to `MAX_JAWS` and `MAX_GUARDS`. Their genes still count in the sums.
+    /// pair elsewhere, to `MAX_JAWS` and `MAX_GUARDS`. Their genes still count in the sums. Each
+    /// cone or guard of a pair has half of the gene's size, and the sums count the whole size once.
     ///
     /// A loaded genome can hold any float. A part value or a `diet` that is not finite counts as 0,
     /// and each one is held in 0 to 1, so every sum here is finite. `Genome::part_sum` counts a size the
@@ -288,10 +291,10 @@ impl Creatures {
                 KIND_TOXIN => gland_sum += size,
                 KIND_JAW => {
                     jaw_sum += size;
-                    for (sin, cos) in directions(anchor) {
+                    for (dir, size) in sides(anchor, size) {
                         if jaws < MAX_JAWS {
                             let k = s * MAX_JAWS + jaws;
-                            (self.jaw_ax[k], self.jaw_ay[k]) = (cos, sin);
+                            (self.jaw_ay[k], self.jaw_ax[k]) = sin_cos(dir);
                             self.jaw_size[k] = size;
                             jaws += 1;
                         }
@@ -301,10 +304,10 @@ impl Creatures {
                     if part.kind == KIND_SHELL {
                         shell_sum += size;
                     }
-                    for (sin, cos) in directions(anchor) {
+                    for (dir, size) in sides(anchor, size) {
                         if guards < MAX_GUARDS {
                             let k = s * MAX_GUARDS + guards;
-                            (self.guard_ax[k], self.guard_ay[k]) = (cos, sin);
+                            (self.guard_ay[k], self.guard_ax[k]) = sin_cos(dir);
                             (self.guard_kind[k], self.guard_size[k]) = (part.kind, size);
                             guards += 1;
                         }
@@ -312,10 +315,8 @@ impl Creatures {
                 }
                 KIND_EYE => {
                     eye_sum += size;
-                    let (dir, half) = (anchor * PI, EYE_HALF_MIN + EYE_HALF_SPAN * extra);
-                    // An eye on the midline is one cone. Any other eye is a pair.
-                    let midline = anchor == 0.0 || anchor == 1.0;
-                    for dir in [dir, -dir].into_iter().take(if midline { 1 } else { 2 }) {
+                    let half = EYE_HALF_MIN + EYE_HALF_SPAN * extra;
+                    for (dir, size) in sides(anchor, size) {
                         if cones < MAX_EYES {
                             let k = s * MAX_EYES + cones;
                             self.eye_dir[k] = dir;

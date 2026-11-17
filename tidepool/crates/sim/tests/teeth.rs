@@ -55,12 +55,12 @@ fn a_jaw_at_the_nose_makes_one_cone_and_a_side_jaw_makes_two() {
 
     let w = body(&[part(KIND_JAW, 0.25, 0.4, 900)]);
     let c = &w.creatures;
-    // A pair: the size counts once in the sum, and each cone has it.
+    // A pair: the size counts once in the sum, and each cone has half of it.
     assert_eq!((c.n_jaws[0], c.jaw_sum[0]), (2, 0.4));
     for (k, dir) in [0.25 * PI, -0.25 * PI].into_iter().enumerate() {
         assert!((c.jaw_ax[k] - dir.cos()).abs() < 1e-5, "cone {k}");
         assert!((c.jaw_ay[k] - dir.sin()).abs() < 1e-5, "cone {k}");
-        assert_eq!(c.jaw_size[k], 0.4);
+        assert_eq!(c.jaw_size[k], 0.2);
     }
 
     // Three side jaws make six cones. The cap is `MAX_JAWS`, and every gene still counts.
@@ -80,10 +80,11 @@ fn a_shell_and_a_spike_make_guards_and_count_their_mass() {
     ];
     let (bare, w) = (body(&[]), body(&guarded));
     let c = &w.creatures;
-    // The shell is a pair at plus and minus half a turn, the spike one guard at the tail.
+    // The shell is a pair at plus and minus half a turn, each with half of its size, and the spike
+    // one guard at the tail.
     assert_eq!(c.n_guards[0], 3);
     assert_eq!(c.guard_kind[..3], [KIND_SHELL, KIND_SHELL, KIND_SPIKE]);
-    assert_eq!(c.guard_size[..3], [0.3, 0.3, 0.2]);
+    assert_eq!(c.guard_size[..3], [0.15, 0.15, 0.2]);
     assert!((c.guard_ay[0] - 1.0).abs() < 1e-5 && (c.guard_ay[1] + 1.0).abs() < 1e-5);
     assert!((c.guard_ax[2] + 1.0).abs() < 1e-5 && c.guard_ay[2].abs() < 1e-5);
     assert_eq!(

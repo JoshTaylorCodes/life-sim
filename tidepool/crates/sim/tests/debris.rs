@@ -109,8 +109,9 @@ fn a_death_leaves_the_share_of_its_energy_and_built_mass() {
     w.params.set(id::CORPSE_SHARE, 0.5);
     let s = add(&mut w, 300.0, 0.5, |_| {});
     let want = share_of(&w, s);
-    // The plan's arithmetic: half of a half store of 36 and of the built mass of about 76.7.
-    assert!((want - 0.5 * (36.0 + 0.5 * 76.7)).abs() < 0.1, "{want}");
+    // The plan's arithmetic: half of a half store of 36 and of the built mass of about 81.3. It was
+    // 76.7 until the founder's eye pair rose from 0.2 to 0.4 (finding 1 of the parts audit).
+    assert!((want - 0.5 * (36.0 + 0.5 * 81.3)).abs() < 0.1, "{want}");
     w.kill(s as u32, CAUSE_STARVED, None);
     let d = &w.debris;
     assert_eq!(d.slots.count(), 1);

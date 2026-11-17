@@ -169,8 +169,9 @@ table! {
     STARTER_SURGE "starter_surge" 0.5 -8.0 8.0;
     /// Founder brain: seen plant to turn. Only a founder with an eye has the wire.
     STARTER_LOOK "starter_look" 1.5 -8.0 8.0;
-    /// Size of the founder's eye gene. 0: no eye gene.
-    FOUNDER_EYE "founder_eye" 0.2 0.0 1.0;
+    /// Size of the founder's eye gene. 0: no eye gene. The eye is a pair, so each cone has half of
+    /// it: 0.4 gives the cones of 0.2 that the founder saw with before a pair split its size.
+    FOUNDER_EYE "founder_eye" 0.4 0.0 1.0;
     /// Cone range in body lengths per unit eye size.
     EYE_RANGE "eye_range" 16.0 0.0 64.0;
     /// Scale of the eye inputs.

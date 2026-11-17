@@ -308,9 +308,10 @@ test('each part draws at the reach of its kind for its size, times the body scal
     word(KIND_FILTER, 0, 0.6),
     word(KIND_CHEMO, 0.15, 0.5),
     word(KIND_FIN, 0.7, 0.3),
-    word(KIND_EYE, 0.2, 0.2),
+    word(KIND_EYE, 0.2, 0.4),
   ]);
-  // REACH in parts.ts, at each size as `unpackPart` reads it.
+  // REACH in parts.ts, at each size as `unpackPart` reads it. Each eye of the pair draws at half of
+  // its gene's size.
   const scale = Math.sqrt(BODY.length * BODY.width);
   const flagellum = 1.9 * (153 / 255);
   const mouth = 0.08 + 0.2 * (153 / 255);
@@ -349,10 +350,12 @@ test('a body with no mouth has no swell', () => {
 test('the outline of one body is pinned', () => {
   // A failure here means the outline that the owner picked on 2026-10-15 changed. Fix: undo the
   // change to TAPER_FULL, NARROWEST, MOUTH_SWELL, or the code that uses them, or ask the owner.
+  // The eye gene is 0.4, the founder's eye since a pair split its size (#1677): each side draws at
+  // 0.2, as the gene of 0.2 drew when the owner picked it. The pinned values did not change.
   const { taper, swells } = outlined([
     part(KIND_FLAGELLUM, 1, 0.6),
     part(KIND_FILTER, 0, 0.8),
-    part(KIND_EYE, 0.2, 0.2),
+    part(KIND_EYE, 0.2, 0.4),
     part(KIND_FILTER, 0.5, 0.3),
   ]);
   expect(taper).toBeCloseTo(-0.40669578, 6);
@@ -500,13 +503,15 @@ test('only a body that is both mixed and young draws the mark of a cross', () =>
 
 // The kinds of M4, and the draw of M3 kept as it was.
 
-// A founder with a side fin, as the head before M4 drew it: buildParts at 189b352.
+// A founder with a side fin, as the head before M4 drew it: buildParts at 189b352. Its eye gene is
+// 0.4, the founder's eye since a pair split its size (#1677): each side draws at 0.2, as the gene
+// of 0.2 drew then. The rows did not change.
 const M3_WORDS = [
   word(KIND_FLAGELLUM, 1, 0.6),
   word(KIND_CILIA, 0.5, 0.4),
   word(KIND_FILTER, 0, 0.6),
   word(KIND_CHEMO, 0.15, 0.5),
-  word(KIND_EYE, 0.2, 0.2),
+  word(KIND_EYE, 0.2, 0.4),
   word(KIND_FIN, 0.7, 0.3),
 ];
 // prettier-ignore
@@ -546,6 +551,20 @@ test('each kind of M4 makes its instances, and a pair makes two', () => {
     expect(
       instancesOf(frameOf(0, [word(kind, 0.3, 0.5)]), (PART_LOD_PX - 1) / BODY.length),
     ).toEqual([]);
+  }
+});
+
+test('each side of an eye, jaw, spike, or shell pair draws at half the size, as it works in the core', () => {
+  const drawn = (kind: number, anchor: number, size: number): number[] =>
+    instancesOf(frameOf(0, [word(kind, anchor, size)])).map((row) => row[3] ?? NaN);
+  for (const kind of [KIND_EYE, KIND_JAW, KIND_SPIKE, KIND_SHELL]) {
+    const [half = NaN] = drawn(kind, 0, 0.4);
+    expect(drawn(kind, 0.3, 0.8)).toEqual([half, half]);
+  }
+  // The other kinds of a pair draw each side at the whole size.
+  for (const kind of [KIND_FIN, KIND_TOXIN]) {
+    const [whole = NaN] = drawn(kind, 0, 0.8);
+    expect(drawn(kind, 0.3, 0.8)).toEqual([whole, whole]);
   }
 });
 
