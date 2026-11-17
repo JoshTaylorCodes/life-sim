@@ -54,7 +54,7 @@ fn pay(cost: f32, energy: &mut f32) -> bool {
 /// Dash and toxin, after `control::apply` and before `motor::step`. Each live slot in ascending
 /// order counts its cooldowns and `strike_left` down by 1, then tries a dash and a cloud in that
 /// order. An ability fires with its part, its command above 0, its cooldown at 0, and its cost paid:
-/// `dash_cost` times the forward flagellum, or `toxin_cost` times the gland. A body's area does not
+/// `dash_cost` times the rear (pushing) flagellum, or `toxin_cost` times the gland. A body's area does not
 /// change a cost. It sets its cooldown to `ability_cooldown`. A dash of a body
 /// with a jaw is a strike: its bite is `strike_bite` times for `strike_ticks` ticks. A cloud needs a
 /// free place in the pool: a full pool fires nothing and charges nothing. The motor holds the speed

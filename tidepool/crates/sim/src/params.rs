@@ -244,7 +244,7 @@ table! {
     DASH_IMPULSE "dash_impulse" 2.0 0.0 8.0;
     /// Spin gained per unit of turn command per unit of rear flagellum, over heft.
     DASH_SPIN "dash_spin" 0.3 0.0 2.0;
-    /// Energy per unit of forward flagellum for one dash.
+    /// Energy per unit of rear (pushing) flagellum for one dash.
     DASH_COST "dash_cost" 10.0 0.0 50.0;
     /// Bite multiplier of a body with a jaw during its dash: a strike.
     STRIKE_BITE "strike_bite" 2.0 1.0 4.0;
