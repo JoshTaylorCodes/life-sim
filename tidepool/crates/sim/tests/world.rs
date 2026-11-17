@@ -272,6 +272,7 @@ fn founders_swim_and_every_tick_adds_one_to_each_age() {
         id::NEURON_UPKEEP,
         id::CONN_UPKEEP,
         id::MOVE_COST,
+        id::TURN_COST,
         id::BITE_RATE,
     ] {
         w.params.set(k, 0.0);
