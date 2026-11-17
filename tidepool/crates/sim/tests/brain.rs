@@ -420,6 +420,58 @@ fn a_founder_still_follows_scent_to_food() {
     assert!(wins >= 4, "nose beat no nose on only {wins} of 5 seeds");
 }
 
+/// The three scent inputs of a creature 200 units from a patch of plants, facing it, one tick after
+/// it is born. `floor` is the `chemo_floor` parameter.
+fn scent_inputs(chemo: f32, floor: f32) -> [f32; 3] {
+    let mut w = World::new(1, 1536.0, 1024.0);
+    w.params.set(id::THINK_EVERY, 1.0);
+    w.params.set(id::CHEMO_FLOOR, floor);
+    for k in 0..20 {
+        let s = w.plants.slots.alloc().expect("plant slot") as usize;
+        let (dx, dy) = ((k % 5) as f32 * 6.0 - 12.0, (k / 5) as f32 * 6.0 - 9.0);
+        (
+            w.plants.x[s],
+            w.plants.y[s],
+            w.plants.reserve[s],
+            w.plants.cap[s],
+        ) = (1000.0 + dx, 500.0 + dy, 20.0, 20.0);
+    }
+    w.plants.dirty = true;
+    w.run(800);
+    let mut g = Genome::founder(&mut Rng::new(1), &w.params);
+    g.set_size(KIND_CHEMO, chemo);
+    let at = SpawnAt {
+        x: 800.0,
+        y: 500.0,
+        heading: 0.0,
+        growth: 1.0,
+        energy01: 1.0,
+        parent: 0,
+        generation: 0,
+        mark: 0,
+    };
+    let c = w.spawn(g, at).expect("slot") as usize;
+    w.tick();
+    w.brains.inputs_mut(c)[N_BODY_IN..][..3]
+        .try_into()
+        .expect("3 scent inputs")
+}
+
+/// A small receptor reads a weaker signal than a large one in the same scent, and below its floor
+/// it reads exactly 0. A brain weight times 0 is 0, so no weight buys the signal back.
+#[test]
+fn a_small_chemoreceptor_reads_a_signal_no_weight_can_amplify() {
+    let large = scent_inputs(1.0, 0.1);
+    let small = scent_inputs(0.1, 0.1);
+    assert!(large[1] > 0.5, "large receptor, gradient {}", large[1]);
+    assert_eq!(small[1..], [0.0; 2], "small receptor");
+
+    // With the floor at 0 the small receptor reads the same gradient, only weaker: a weight of 10
+    // would make it as strong as the large one. The floor is what stops that.
+    let open = scent_inputs(0.1, 0.0);
+    assert!(open[1] > 0.05 && open[1] < large[1], "{open:?}");
+}
+
 #[test]
 fn creatures_think_on_alternate_ticks() {
     let mut w = World::new(1, 1536.0, 1024.0);

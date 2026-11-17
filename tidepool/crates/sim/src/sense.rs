@@ -24,6 +24,13 @@ const SCENT_FLOOR: f32 = 1e-6;
 ///
 /// The gradient is divided by the local scent level, so a creature far from food still gets a
 /// direction. The side gradient is positive when scent rises on the creature's `+heading` side.
+///
+/// The gradient is scaled by the chemoreceptor's size, then its length (both inputs together) loses
+/// `chemo_floor`, with the direction kept. A small chemoreceptor in a weak scent reads a length
+/// under the floor, so both gradient inputs are exactly 0 and no brain weight can scale them back.
+/// A floor, not noise: a weight could grow a signal past noise, or evolution could average it away.
+/// The floor takes the length and not each input, so a strong signal keeps its fine steering.
+/// The level input has no floor: it says "on food", and it falls with the scent far from food.
 pub fn step(world: &mut World) {
     // `plant::step` runs later in the tick, so a plant added since then is not in the grid yet.
     world.plants.refresh_grid();
@@ -31,6 +38,7 @@ pub fn step(world: &mut World) {
     let every = params.get(id::THINK_EVERY) as u32;
     let see_every = every * params.get(id::SEE_EVERY) as u32;
     let (v_max, gain) = (params.get(id::V_MAX), params.get(id::CHEMO_GAIN));
+    let floor = params.get(id::CHEMO_FLOOR);
     let (per_mass, hurt_gain) = (params.get(id::ENERGY_PER_MASS), params.get(id::HURT_GAIN));
     let mixing = params.get(id::MIX_RATE) > 0.0;
     for s in 0..world.creatures.slots.high_water() as usize {
@@ -70,8 +78,15 @@ pub fn step(world: &mut World) {
             let level = s0 * chemo;
             let input = &mut input[in_scent as usize..][..3];
             input[0] = level / (1.0 + level);
-            input[1] = ((gx * hc + gy * hs) * k).clamp(-1.0, 1.0);
-            input[2] = ((-gx * hs + gy * hc) * k).clamp(-1.0, 1.0);
+            let fwd = ((gx * hc + gy * hs) * k).clamp(-1.0, 1.0);
+            let across = ((-gx * hs + gy * hc) * k).clamp(-1.0, 1.0);
+            let strength = (fwd * fwd + across * across).sqrt();
+            let keep = if strength > 0.0 {
+                (strength - floor).max(0.0) / strength
+            } else {
+                0.0
+            };
+            (input[1], input[2]) = (fwd * keep, across * keep);
         }
         if c.n_eyes[s] > 0 && thinks(*tick, s, see_every) {
             eye::see(world, s);
