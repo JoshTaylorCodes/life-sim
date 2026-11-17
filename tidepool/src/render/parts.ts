@@ -188,7 +188,7 @@ export function outlineOf(
   const end = o + OUTLINE_FLOATS;
   out.fill(0, o + OUTLINE_SWELLS, end);
   for (const part of parts) {
-    if (part.kind !== KIND_FILTER) continue;
+    if (part.kind !== KIND_FILTER || part.size === 0) continue;
     const { x, r } = swellAt(part, length, width, taper);
     // The swell at this place, or the first that is free.
     let at = o + OUTLINE_SWELLS;
@@ -281,7 +281,8 @@ export function buildParts(
       const kind = word & 0xff;
       const reach = near || kind === KIND_FLAGELLUM ? REACH[kind] : undefined;
       const part = reach && unpackPart(word);
-      if (!part || !reach) continue;
+      // A Filter of size 0 is shed: it does nothing, so it is not drawn.
+      if (!part || !reach || (part.kind === KIND_FILTER && part.size === 0)) continue;
       let phase = part.kind === KIND_FLAGELLUM ? (swum[slot] ?? 0) : ripple;
       if (part.kind === KIND_JAW) {
         if (((u32[r + C_FLAGS] ?? 0) & FLAG_BIT) !== 0) {
