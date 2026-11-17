@@ -222,13 +222,30 @@ pub fn radius(length: f32, width: f32) -> f32 {
     (length + width) / 4.0
 }
 
+/// Half a step of the byte that `frame::pack` makes of an anchor.
+const ANCHOR_HALF_STEP: f32 = 0.5 / 255.0;
+
+/// Whether a part at `anchor` is a mirrored pair. An anchor that the frame packs as 0 or 255, or
+/// that is not finite, is on the midline, so the page and the core agree on which parts are pairs.
+pub fn is_pair(anchor: f32) -> bool {
+    (ANCHOR_HALF_STEP..1.0 - ANCHOR_HALF_STEP).contains(&anchor)
+}
+
 /// Each side of a part at `anchor`, which is held in 0 to 1: its direction in radians from the
-/// heading and its share of `size`. One side on the midline, at 0 or 1, with the whole size, and a
-/// pair at plus and minus `anchor * PI` elsewhere, each with half of it (finding 1 of the parts
-/// audit): a pair gives what one part of its size gives, spread over two arcs.
+/// heading and its share of `size`. One side on the midline (`is_pair`), at the nose or the tail,
+/// with the whole size, and a pair at plus and minus `anchor * PI` elsewhere, each with half of it
+/// (finding 1 of the parts audit): a pair gives what one part of its size gives, spread over two
+/// arcs.
 fn sides(anchor: f32, size: f32) -> impl Iterator<Item = (f32, f32)> {
-    let n = if anchor == 0.0 || anchor == 1.0 { 1 } else { 2 };
-    let dir = anchor * PI;
+    let pair = is_pair(anchor);
+    let n = if pair { 2 } else { 1 };
+    let dir = if pair {
+        anchor * PI
+    } else if anchor < 0.5 {
+        0.0
+    } else {
+        PI
+    };
     [dir, -dir]
         .into_iter()
         .take(n)
@@ -370,6 +387,30 @@ impl Creatures {
         let founder_half = EYE_HALF_MIN + EYE_HALF_SPAN * FOUNDER_EYE_EXTRA;
         let width = 1.0 + params.get(id::EYE_TRADE) * (founder_half - self.eye_half[eye]);
         (params.get(id::EYE_RANGE) * self.eye_size[eye] * self.length(s) * width).min(EYE_REACH)
+    }
+
+    /// The shell size that a body's drag counts. A shell side that faces within the arc of the line
+    /// of the heading (`arc_cos2` is its squared cosine) shares one bite with the others at that
+    /// end, so together they count to `cap`, the size that blocks a whole bite. A biter is at one
+    /// end, so the nose and the tail count each to `cap`. Any other side holds a bite alone, so
+    /// each counts to `cap`: a split pair keeps its drag until its best side blocks a whole bite.
+    pub fn shell_drag_size(&self, s: usize, arc_cos2: f32, cap: f32) -> f32 {
+        let (mut fore, mut aft, mut aside) = (0.0, 0.0, 0.0);
+        let first = s * MAX_GUARDS;
+        for k in first..first + (self.n_guards[s] as usize).min(MAX_GUARDS) {
+            if self.guard_kind[k] != KIND_SHELL {
+                continue;
+            }
+            let (ax, size) = (self.guard_ax[k], self.guard_size[k]);
+            if ax * ax < arc_cos2 {
+                aside += size.min(cap);
+            } else if ax > 0.0 {
+                fore += size;
+            } else {
+                aft += size;
+            }
+        }
+        fore.min(cap) + aft.min(cap) + aside
     }
 
     /// The part sizes as the upkeep and the mass count them: an eye's size is times `eye_cost`.

@@ -11,7 +11,7 @@ use crate::snapshot::{LoadError, Reader, Writer};
 use crate::world::World;
 
 /// The squared cosine of a half angle, for the cone test of `eye.rs`.
-fn cos2(half: f32) -> f32 {
+pub fn cos2(half: f32) -> f32 {
     let cos = sin_cos(half).1;
     cos * cos
 }

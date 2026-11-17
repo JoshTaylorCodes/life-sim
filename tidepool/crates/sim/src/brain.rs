@@ -8,7 +8,7 @@
 
 use std::ops::Range;
 
-use crate::creature::MAX_EYES;
+use crate::creature::{is_pair, MAX_EYES};
 use crate::genome::{
     BrainGenome, ConnGene, Genome, HiddenGene, Node, OutGene, BODY, FOUNDER_EYE_HISTORY,
     FOUNDER_JAW_HISTORY, KIND_CHEMO, KIND_EYE, KIND_FLAGELLUM, KIND_TOXIN,
@@ -139,10 +139,7 @@ pub fn ports(g: &Genome) -> Ports {
     }
     let mut room = MAX_EYES;
     for part in g.parts.iter().filter(|part| part.kind == KIND_EYE) {
-        // As in `Creatures::express`: an anchor is held in 0 to 1, one that is not finite counts
-        // as 0, and an eye at exactly 0 or 1 is on the midline and is one cone.
-        let pair = part.anchor > 0.0 && part.anchor < 1.0;
-        let made = room.min(if pair { 2 } else { 1 });
+        let made = room.min(if is_pair(part.anchor) { 2 } else { 1 });
         room -= made;
         let node = |port: u8| Node {
             owner: part.history,

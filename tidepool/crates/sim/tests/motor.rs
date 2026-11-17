@@ -300,10 +300,16 @@ fn side_drag_stops_at_its_limit() {
     );
 }
 
-/// The forward speed that a coasting body with this shell keeps after one tick. A shell blocks a
-/// whole bite at a size of 0.5 here.
+/// The forward speed that a coasting body with this shell on its tail keeps after one tick. A
+/// midline shell blocks a whole bite at a size of 0.5 here. `pairs.rs` has the shell pairs.
 fn coast_with_shell(size: f32) -> f32 {
-    let (mut w, s) = solo(|g| g.set_size(KIND_SHELL, size));
+    let (mut w, s) = solo(|g| {
+        g.set_size(KIND_SHELL, size);
+        g.parts
+            .iter_mut()
+            .filter(|p| p.kind == KIND_SHELL)
+            .for_each(|p| p.anchor = 1.0);
+    });
     w.params.set(id::SHELL_BLOCK, 2.0);
     w.params.set(id::SHELL_DRAG, 0.3);
     w.creatures.vx[s] = 2.0;
