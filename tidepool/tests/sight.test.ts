@@ -56,6 +56,17 @@ test('the edge of a cone is soft', () => {
   expect(seen(s, 42, 0)).toBe(0.25);
 });
 
+test('a wide cone draws the shorter range that the frame gives it', () => {
+  // The core sends 57.6 for a cone of half angle 0.2 and 19.2 for one of 1.2, at the same size.
+  const view = (half: number, range: number) => sightOf(frameOf(7, [[0, Math.cos(half), range]]));
+  const [narrow, wide] = [view(0.2, 57.6), view(1.2, 19.2)];
+  // 30 units out on the axis of both cones, past the range of the wide one.
+  expect(seen(narrow, 130, 50)).toBe(1);
+  expect(seen(wide, 130, 50)).toBe(0.25);
+  // 10 units out, both see it.
+  expect(seen(wide, 110, 50)).toBe(1);
+});
+
 test('sightOf reads the cones of the header and is null with nothing possessed', () => {
   expect(sightOf(frameOf(NO_SLOT, []))).toBeNull();
   const sight = sightOf(

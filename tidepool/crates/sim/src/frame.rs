@@ -119,7 +119,6 @@ pub fn card_body(world: &World, slot: u32) -> Vec<u32> {
 pub fn write(world: &mut World, x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
     let per_mass = world.params.get(id::ENERGY_PER_MASS);
     let plant_cap = world.params.get(id::PLANT_CAP);
-    let eye_range = world.params.get(id::EYE_RANGE);
     let cooldown = world.params.get(id::BUD_COOLDOWN) as u32;
     let ability_cooldown = world.params.get(id::ABILITY_COOLDOWN) as u32;
     let toxin_ticks = world.params.get(id::TOXIN_TICKS);
@@ -136,6 +135,7 @@ pub fn write(world: &mut World, x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
         grid,
         frame,
         kills,
+        params,
         ..
     } = world;
     let (x0, y0, x1, y1) = (x0 - MARGIN, y0 - MARGIN, x1 + MARGIN, y1 + MARGIN);
@@ -175,7 +175,7 @@ pub fn write(world: &mut World, x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
             let cone = [
                 c.heading[s] + c.eye_dir[eye],
                 c.eye_cos[eye],
-                c.cone_range(s, k, eye_range),
+                c.cone_range(s, k, params),
             ];
             frame[at..at + cone.len()].copy_from_slice(&cone.map(f32::to_bits));
         }
@@ -315,7 +315,7 @@ pub fn write(world: &mut World, x0: f32, y0: f32, x1: f32, y1: f32) -> u32 {
 mod tests {
     use super::*;
     use crate::eye::EYE_REACH;
-    use crate::genome::{Genome, KIND_FLAGELLUM};
+    use crate::genome::{Genome, FOUNDER_EYE_EXTRA, KIND_EYE, KIND_FLAGELLUM};
     use crate::world::SpawnAt;
 
     const HEADER: usize = HEADER_WORDS as usize;
@@ -584,13 +584,39 @@ mod tests {
         w.creatures.growth[9] = 0.5;
         assert!(w.possess(w.creatures.uid[9]));
         write(&mut w, 0.0, 0.0, 1536.0, 1024.0);
-        let range = w.creatures.cone_range(9, 0, w.params.get(id::EYE_RANGE));
+        let range = w.creatures.cone_range(9, 0, &w.params);
         // Half of the 16 * 0.2 lengths that the same body sees when it is full-grown.
         assert!((range - 1.6 * w.creatures.len[9]).abs() < 1e-4, "{range}");
         assert_eq!(w.frame[CONE_COUNT_AT], 2);
         for cone in w.frame[CONES_AT..].as_chunks::<3>().0.iter().take(2) {
             assert_eq!(cone[2], range.to_bits());
         }
+    }
+
+    /// The cone that the page draws is shorter for a wide eye than for a narrow one of the same
+    /// size, and the founder's width is the one that keeps the range of 16 * 0.2 lengths.
+    #[test]
+    fn the_cone_that_the_page_draws_is_shorter_for_a_wider_eye() {
+        let mut w = World::new(5, 1536.0, 1024.0);
+        w.params.set(id::FOUNDER_EYE, 0.4);
+        w.seed_founders(50, 0);
+        assert!(w.possess(w.creatures.uid[9]));
+        let length = w.creatures.length(9);
+        let mut drawn = |extra: f32| {
+            let mut g = w.genomes[9].clone();
+            g.parts.iter_mut().for_each(|p| {
+                if p.kind == KIND_EYE {
+                    p.extra = extra;
+                }
+            });
+            w.creatures.express(9, &g);
+            write(&mut w, 0.0, 0.0, 1536.0, 1024.0);
+            f32::from_bits(w.frame[CONES_AT + 2]) / length
+        };
+        let (narrow, founder, wide) = (drawn(0.0), drawn(FOUNDER_EYE_EXTRA), drawn(1.0));
+        assert!((narrow - 4.8).abs() < 1e-3, "narrow {narrow}");
+        assert!((founder - 3.2).abs() < 1e-3, "founder {founder}");
+        assert!((wide - 1.6).abs() < 1e-3, "wide {wide}");
     }
 
     #[test]

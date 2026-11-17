@@ -746,12 +746,12 @@ fn contexts(world: &World, s: usize, tick: u32) -> [bool; 3] {
     let hit = at != 0 && at <= tick && tick - at < HIT_TICKS;
     let (mut jaw, mut near) = (false, false);
     if b.in_eye[s] != NO_INPUT {
-        let (gain, range) = (p.get(id::EYE_GAIN), p.get(id::EYE_RANGE));
+        let gain = p.get(id::EYE_GAIN);
         let inputs = &b.cur[s * MAX_NEURONS + b.in_eye[s] as usize..];
         for k in 0..(c.n_eyes[s] as usize).min(MAX_EYES) {
             let (body, jaw_seen) = (inputs[3 * k + 1], inputs[3 * k + 2]);
             jaw |= jaw_seen > 0.0;
-            let d = (1.0 - body / gain) * c.cone_range(s, k, range);
+            let d = (1.0 - body / gain) * c.cone_range(s, k, p);
             near |= body > 0.0 && d <= STRIKE_LENGTHS * c.length(s);
         }
     }
