@@ -72,8 +72,8 @@ pub fn step(world: &mut World) {
             continue;
         }
         // At the top of the chain the gap would leave a body over `1 - gap` immune, so a biter
-        // whose diet plus the gap is over 1 may bite any body over `1 - gap` too.
-        let top = c.diet[s] + diet_gap > 1.0 && c.diet[j] > 1.0 - diet_gap;
+        // whose diet plus the gap is over 1 may bite any body at or over `1 - gap` too.
+        let top = c.diet[s] + diet_gap > 1.0 && c.diet[j] >= 1.0 - diet_gap;
         if motor.mass[s] < ratio * motor.mass[j] || (c.diet[s] - c.diet[j] < diet_gap && !top) {
             continue;
         }
