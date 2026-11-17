@@ -25,3 +25,23 @@ hypothesis is committed before its run. One run at a time. Protocol per trial: `
 bodies off plants, so omnivores fall and carnivores rise on seeds 4 and 6; I1 caps the hunter share
 under 0.8 on seeds 5 and 8. Risk: O1 starves the founder hunters (jaw 0.5 keeps 2/3 of its
 Filter) and carnivores vanish early.
+
+### T1 rows
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.939 | 0.061 | 0.000 | 0.495 | misses (carn) |
+| 4 | 0.949 | 0.051 | 0.000 | 0.360 | misses (carn) |
+| 5 | 0.949 | 0.051 | 0.000 | 0.172 | misses (carn) |
+| 6 | 0.946 | 0.054 | 0.000 | 0.124 | misses (carn) |
+| 8 | 0.933 | 0.066 | 0.001 | 0.648 | misses (carn) |
+
+0 of 5, `gate-health` 3/3. **The risk came true:** hunting collapses. Kills fall from about 500 at
+12,000 to under 10 by 36,000 on seeds 1 and 5, carnivores are gone everywhere, and the world is
+plant eaters. The hunter band holds only because there is little to hunt with. Log: `rows/takeover-T1.log`.
+
+## T2: I1 alone (`jaw_filter_cost` 0, `interference` 0.3): hypothesis before the run
+
+Isolates which rule ended the hunt. Expected: I1 alone acts only where hunters crowd, so carnivores
+survive (0.1 to 0.25 as in the baseline) and the hunter share on seeds 5 and 8 falls under 0.8. If
+carnivores still vanish, I1 at 0.3 is the cause.
