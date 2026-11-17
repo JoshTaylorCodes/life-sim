@@ -40,7 +40,11 @@ pub(crate) fn side(y: f32) -> f32 {
 /// `strike_bite` times that during a strike. The guards of `j` whose arc holds `s`, at the places
 /// of this tick after the motor, block a share of it (shells). What `j` loses `s` gains. The guards
 /// that hold `s` also hurt it (spikes) in proportion to what the bite took, so a bite a shell
-/// blocked whole costs `s` nothing to a spike. What a spike hurts is lost.
+/// blocked whole costs `s` nothing to a spike. What a spike hurts is lost. The bite is divided by
+/// `1 + interference * n`, where `n` counts the other live bodies with a `jaw_sum` over 0 whose
+/// centre is within `interference_radius` of that of `s` (rule I1, predator interference). The
+/// creature grid is that of the start of the tick and bodies have moved by at most `v_max` since,
+/// so the count reads the grid that far past the radius. A count is the same in any order.
 ///
 /// A body taken to 0 or less is killed after the loop, in slot order: a bitten body with
 /// `CAUSE_EATEN` and a biter with `CAUSE_SPIKED`, each killed by the other.
@@ -54,6 +58,8 @@ pub fn step(world: &mut World) {
     let (strike_bite, spike_hurt) = (p.get(id::STRIKE_BITE), p.get(id::SPIKE_HURT));
     let (shell_block, diet_k) = (p.get(id::SHELL_BLOCK), p.get(id::DIET_K));
     let diet_gap = p.get(id::BITE_DIET_GAP);
+    let (interference, crowd_r) = (p.get(id::INTERFERENCE), p.get(id::INTERFERENCE_RADIUS));
+    let crowd_reach = crowd_r + p.get(id::V_MAX);
     let (shell_cos2, spike_cos2) = (cos2(p.get(id::SHELL_ARC)), cos2(p.get(id::SPIKE_ARC)));
     // `World::tick` after this tick, as the frame reads a stamp.
     let stamp = world.tick.wrapping_add(1);
@@ -61,6 +67,7 @@ pub fn step(world: &mut World) {
         creatures: c,
         motor,
         stats,
+        grid,
         ..
     } = world;
     let mut dead: Vec<(u32, u32, u32)> = Vec::new();
@@ -87,6 +94,19 @@ pub fn step(world: &mut World) {
             rate * motor.bite_jaws[s] * (area / REF_WIDTH) * pow_quarters(c.diet[s], diet_k);
         if c.strike_left[s] > 0 {
             bite *= strike_bite;
+        }
+        if interference > 0.0 {
+            let (x, y, r) = (c.x[s], c.y[s], crowd_reach);
+            let mut n = 0u32;
+            grid.for_each_in_box(x - r, y - r, x + r, y + r, |k| {
+                let k = k as usize;
+                let (dx, dy) = (c.x[k] - x, c.y[k] - y);
+                let near = dx * dx + dy * dy <= crowd_r * crowd_r;
+                if k != s && near && c.jaw_sum[k] > 0.0 && c.slots.is_alive(k as u32) {
+                    n += 1;
+                }
+            });
+            bite /= 1.0 + interference * n as f32;
         }
         // The offset from `j` to `s`, in the frame of `j`, where `express` holds the guards.
         let (dx, dy) = (c.x[s] - c.x[j], c.y[s] - c.y[j]);

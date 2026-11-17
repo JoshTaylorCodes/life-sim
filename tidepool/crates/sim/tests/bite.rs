@@ -34,6 +34,7 @@ fn still_water() -> World {
     w.params.set(id::SPIKE_HURT, 0.0);
     w.params.set(id::SHELL_DRAG, 0.0);
     w.params.set(id::STRIKE_BITE, 1.0);
+    w.params.set(id::INTERFERENCE, 0.0);
     // The diet rules (D1, D2) are off here: `diet.rs` tests them.
     w.params.set(id::DIET_K, 0.0);
     w.params.set(id::BITE_DIET_GAP, -1.0);
@@ -413,4 +414,54 @@ fn two_runs_of_a_hunting_world_are_equal() {
     let first = run();
     assert_eq!(first, run());
     assert!(first.3 > 0.0 && first.4 > 0, "the world hunts: {first:?}");
+}
+
+/// The pair of `pair`, with a hunter at each offset from the biter along y. No body touches a
+/// hunter. Returns what the prey lost in one tick and what the biter and the prey held in all.
+fn bite_among_hunters(interference: f32, offsets: &[f32]) -> (f32, f32, f32) {
+    let (mut w, s, j) = pair(|_| {});
+    w.params.set(id::INTERFERENCE, interference);
+    w.params.set(id::INTERFERENCE_RADIUS, 48.0);
+    for &dy in offsets {
+        let h = adult(&mut w, 100.0, 0.0, jaw);
+        w.creatures.y[h] += dy;
+    }
+    let (ej, before) = (
+        w.creatures.energy[j],
+        w.creatures.energy[s] + w.creatures.energy[j],
+    );
+    w.run(1);
+    assert_eq!(w.motor.bite_target[s] as usize, j);
+    let after = w.creatures.energy[s] + w.creatures.energy[j];
+    (ej - w.creatures.energy[j], before, after)
+}
+
+/// Rule I1: a bite is divided by `1 + interference * n`, `n` the other bodies with a jaw within
+/// `interference_radius` of the biter. The prey has no jaw, so a biter alone takes the whole bite.
+#[test]
+fn two_hunters_near_divide_the_bite_by_1_plus_2_interference() {
+    let (alone, _, _) = bite_among_hunters(0.3, &[]);
+    let (crowded, _, _) = bite_among_hunters(0.3, &[30.0, -30.0]);
+    assert!((alone - 3.0).abs() < 1e-5, "{alone}");
+    assert!((crowded - 3.0 / 1.6).abs() < 1e-5, "{crowded}");
+}
+
+#[test]
+fn a_hunter_outside_the_radius_does_not_count() {
+    let (take, _, _) = bite_among_hunters(0.3, &[47.0, -49.0]);
+    assert!((take - 3.0 / 1.3).abs() < 1e-5, "{take}");
+}
+
+#[test]
+fn at_interference_0_hunters_near_change_nothing() {
+    let (alone, _, _) = bite_among_hunters(0.0, &[]);
+    let (crowded, _, _) = bite_among_hunters(0.0, &[30.0, -30.0]);
+    assert_eq!(alone.to_bits(), crowded.to_bits());
+}
+
+#[test]
+fn a_bite_among_hunters_conserves_energy() {
+    let (take, before, after) = bite_among_hunters(0.3, &[30.0, -30.0]);
+    assert!(take > 0.0);
+    assert!((before - after).abs() < 1e-5, "{before} != {after}");
 }
