@@ -7,7 +7,14 @@ import type { NoteId } from './words/notes';
 
 export const errorText = signal<string | null>(null);
 export const ready = signal(false);
-export const stats = signal({ tick: 0, creatures: 0, plants: 0, tickMicros: 0, fps: 0 });
+export const stats = signal({
+  tick: 0,
+  creatures: 0,
+  plants: 0,
+  tickMicros: 0,
+  slow: false, // the world runs fewer ticks than it is asked for
+  fps: 0,
+});
 export const benchText = signal<string | null>(null);
 export const mode = signal<'watch' | 'play'>('watch');
 export const brainDriving = signal(false);
