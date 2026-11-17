@@ -93,13 +93,14 @@ export function steerFromKeys(
 }
 
 /**
- * The abilities that parts give: a Flagellum a dash, a Toxin gland a cloud. A Jaw gives none: it
- * makes the body's dash a strike.
+ * The abilities that parts give: a Flagellum that pushes forward a dash, a Toxin gland a cloud. A
+ * Flagellum at the middle or forward of it pushes none (`push_of` in the core). A Jaw gives none:
+ * it makes the body's dash a strike.
  */
 export function abilitiesOf(parts: Part[]): number {
   let mask = 0;
-  for (const { kind } of parts) {
-    if (kind === KIND_FLAGELLUM) mask |= ABILITY_DASH;
+  for (const { kind, anchor, size } of parts) {
+    if (kind === KIND_FLAGELLUM && size > 0 && anchor > 0.5) mask |= ABILITY_DASH;
     else if (kind === KIND_TOXIN) mask |= ABILITY_TOXIN;
   }
   return mask;

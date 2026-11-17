@@ -77,7 +77,8 @@ const BODY_INPUTS: [u8; N_BODY_IN] = [
 const SCENT_INPUTS: [u8; 3] = [IN_SCENT, IN_GRAD_FWD, IN_GRAD_SIDE];
 /// The outputs that every body declares, in block order. Their ports count up from `OUT_THRUST`.
 pub const BODY_OUTPUTS: [u8; 3] = [OUT_THRUST, OUT_TURN, OUT_ACCEPT];
-/// Each trigger output and the kind whose sizes, summed above 0, declare it, in block order.
+/// Each trigger output and the kind whose sizes, summed above 0, declare it, in block order. For
+/// a flagellum the sum is its forward push (`Genome::push_sum`), since a dash pushes along the heading.
 pub const TRIGGERS: [(u8, u8); 2] = [(OUT_DASH, KIND_FLAGELLUM), (OUT_TOXIN, KIND_TOXIN)];
 /// The output ports, `OUT_THRUST` to `OUT_TOXIN`, with the retired 132 among them.
 const OUT_PORTS: usize = (OUT_TOXIN - OUT_THRUST + 1) as usize;
@@ -125,7 +126,7 @@ pub struct Ports {
 /// Then the eye genes in gene order: for each cone that `Creatures::express` makes, its plant
 /// input, its body input, and its jaw input, `A` before `B`. A cone past `MAX_EYES` declares
 /// nothing. Outputs: thrust, turn, and accept, then the triggers of `TRIGGERS` that the parts
-/// declare. A part of a trigger's kind declares no port of its own: the body owns the trigger.
+/// declare. A body with only a side flagellum declares no dash. A part of a trigger's kind declares no port of its own: the body owns the trigger.
 ///
 /// The names are all different when every part has its own history id above `BODY`, as in a
 /// living world. For a hand-made genome where two eye genes share an id, or where one has the id
@@ -156,7 +157,14 @@ pub fn ports(g: &Genome) -> Ports {
         }
     }
     let mut outputs: Vec<Node> = BODY_OUTPUTS.map(Node::body).into();
-    let declared = TRIGGERS.iter().filter(|&&(_, kind)| g.size_of(kind) > 0.0);
+    let declared = TRIGGERS.iter().filter(|&&(_, kind)| {
+        let size = if kind == KIND_FLAGELLUM {
+            g.push_sum()
+        } else {
+            g.size_of(kind)
+        };
+        size > 0.0
+    });
     outputs.extend(declared.map(|&(port, _)| Node::body(port)));
     Ports { inputs, outputs }
 }

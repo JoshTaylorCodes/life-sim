@@ -117,14 +117,30 @@ test('a key for an ability that the body lacks does nothing', () => {
 });
 
 test('the parts of a body give its abilities', () => {
-  const part = (kind: number) => ({ kind, anchor: 0, size: 1, extra: 0 });
+  const part = (kind: number, anchor = 0) => ({ kind, anchor, size: 1, extra: 0 });
+  const rear = part(P.KIND_FLAGELLUM, 1);
   expect(abilitiesOf([])).toBe(0);
-  expect(abilitiesOf([part(P.KIND_FLAGELLUM), part(P.KIND_FILTER), part(P.KIND_EYE)])).toBe(
-    ABILITY_DASH,
-  );
+  expect(abilitiesOf([rear, part(P.KIND_FILTER), part(P.KIND_EYE)])).toBe(ABILITY_DASH);
   // A jaw gives no ability of its own: it makes the dash a strike.
   expect(abilitiesOf([part(P.KIND_JAW)])).toBe(0);
-  expect(abilitiesOf([part(P.KIND_TOXIN), part(P.KIND_FLAGELLUM), part(P.KIND_JAW)])).toBe(ALL);
+  expect(abilitiesOf([part(P.KIND_TOXIN), rear, part(P.KIND_JAW)])).toBe(ALL);
+});
+
+test('only a flagellum that pushes forward gives a dash', () => {
+  const flagellum = (anchor: number, size = 1) => ({
+    kind: P.KIND_FLAGELLUM,
+    anchor,
+    size,
+    extra: 0,
+  });
+  expect(abilitiesOf([flagellum(0.75)])).toBe(ABILITY_DASH);
+  // At the middle, and forward of it, a flagellum works across the body and gives no push.
+  expect(abilitiesOf([flagellum(0.5)])).toBe(0);
+  expect(abilitiesOf([flagellum(0.25)])).toBe(0);
+  expect(abilitiesOf([flagellum(0)])).toBe(0);
+  expect(abilitiesOf([flagellum(1, 0)])).toBe(0);
+  // One rear flagellum is enough.
+  expect(abilitiesOf([flagellum(0.5), flagellum(1)])).toBe(ABILITY_DASH);
 });
 
 test('the page counts the cooldown from its own press, and only from a press that it posts', () => {
