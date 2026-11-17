@@ -202,3 +202,15 @@ For the owner:
    M6's zones as refuges (the decision of 2026-10-16), or more seeds per reading so a rule's effect
    can be told from the path.
 3. `chemo_floor` (see `parts-batch.md`): one trial at 0 to isolate the chemoreceptor fall.
+
+## The gates at the shipped set (`75d5d3c3`)
+
+2026-11-17, 02:06 to 02:29, load 10 to 16 (other projects' tests). Log: `rows/takeover-gates-75d5d3c3.log`.
+
+- `make check` exit 0.
+- `gate-health` 3/3 PASS.
+- `gate-evolve` **3/3 PASS**: the first green reading at 36,000 since rule E1 (the batch head read 2/3).
+- Long gate **2/5** (seeds 1 and 4 pass). Seeds 5, 6, 8 fail the predation bands: the hunt dies
+  (`kills_late` 1 to 5 against 20, `flesh_late` 0.000, `carn_hi` 0.001). Seed 5 also fails the chemo
+  gap (0.018). The long predation bands reject a world without a hunt, which is what they are for.
+- Throughput not read: the machine held other projects' tests.
