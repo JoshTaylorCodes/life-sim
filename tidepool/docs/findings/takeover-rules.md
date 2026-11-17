@@ -113,3 +113,22 @@ A small dose that trims the middle and caps the hunter share without cutting the
 carnivores at or near the head's (0.15 to 0.23 on seeds 1, 5, 8), omnivores 0.02 to 0.05 lower,
 under 0.50 on two of those seeds; hunter peak under 0.8 on seed 5 or 8. If carnivores still
 vanish, no dose of these two rules keeps the climb, and the target needs a different rule.
+
+### T5 rows
+
+| Seed | Herb | Omni | Carn | Hunters, most from 72,000 | Target |
+|---|---|---|---|---|---|
+| 1 | 0.945 | 0.054 | 0.001 | 0.541 | misses (carn) |
+| 4 | 0.962 | 0.038 | 0.000 | 0.239 | misses (carn) |
+| 5 | 0.947 | 0.053 | 0.000 | 0.309 | misses (carn) |
+| 6 | 0.920 | 0.079 | 0.001 | 0.445 | misses (carn) |
+| 8 | 0.919 | 0.081 | 0.000 | 0.123 | misses (carn) |
+
+0 of 5. No carnivores on any seed, even at a tenth of each rule. Log: `rows/takeover-T5.log`.
+
+## T6: control, both rules at 0 on `23c44754`: hypothesis before the run
+
+That even a light dose removes every carnivore is suspicious. With `interference` 0 and
+`jaw_filter_cost` 0 both rules are off to the bit, so this head should give the batch head's rows
+(`225720e6`) exactly. If it does, the rules cut the climb at any dose. If it does not, something
+else moved the world between the two heads, and T1 to T5 compare against the wrong baseline.
