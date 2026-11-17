@@ -397,12 +397,26 @@ test('the outline swells at each place with a mouth, and a larger mouth swells m
   expect(Math.min(first[1] ?? 0, first[3] ?? 0)).toBeGreaterThan(0);
 });
 
-test('a Filter of size 0 draws no mouth and no swell', () => {
-  const rows = instancesOf(frameOf(0, [word(KIND_FLAGELLUM, 1, 0.6), word(KIND_FILTER, 0, 0)]));
-  expect(rows.map((row) => row[4])).toEqual([KIND_FLAGELLUM]);
-  expect(outlined([part(KIND_FILTER, 0, 0)]).swells).toEqual(Array(OUTLINE_FLOATS - 4).fill(0));
-  // A Filter that is not 0 still draws.
-  expect(instancesOf(frameOf(0, [word(KIND_FILTER, 0, 0.1)])).length).toBe(1);
+test.each([
+  KIND_FLAGELLUM,
+  KIND_FILTER,
+  KIND_CHEMO,
+  KIND_FIN,
+  KIND_EYE,
+  KIND_JAW,
+  KIND_SPIKE,
+  KIND_SHELL,
+  KIND_TOXIN,
+])('a part of kind %i and size 0 draws nothing and adds no swell', (kind) => {
+  // A flagellum at size 0.6 beside it shows that only the part of size 0 is skipped.
+  const beside = kind === KIND_FLAGELLUM ? KIND_FILTER : KIND_FLAGELLUM;
+  const rows = instancesOf(frameOf(0, [word(beside, 1, 0.6), word(kind, 0, 0)]));
+  expect(rows.map((row) => Math.abs(row[4] ?? 0))).toEqual([beside]);
+  expect(outlined([part(kind, 0, 0)]).swells).toEqual(Array(OUTLINE_FLOATS - 4).fill(0));
+  // The same part that is not 0 still draws, and the Filter still swells.
+  expect(instancesOf(frameOf(0, [word(kind, 0, 0.1)])).length).toBeGreaterThan(0);
+  const swells = outlined([part(kind, 0, 0.1)]).swells;
+  expect(swells.some((value) => value !== 0)).toBe(kind === KIND_FILTER);
 });
 
 test('the outline of a body is made again only when the body or its size changes', () => {

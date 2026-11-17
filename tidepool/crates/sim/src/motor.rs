@@ -164,6 +164,9 @@ pub fn step(world: &mut World) {
     let fin_turn = fin_torque / v_max;
     let (drag_fwd, shell_drag) = (params.get(id::DRAG_FWD), params.get(id::SHELL_DRAG));
     let drag_side = params.get(id::DRAG_SIDE);
+    // The shell size at which a bite is blocked whole. Past it the shell drags for nothing. At
+    // `shell_block` 0 the cap is infinite and no shell blocks a whole bite.
+    let shell_cap = 1.0 / params.get(id::SHELL_BLOCK);
     let keep_ang = 1.0 - params.get(id::DRAG_ANG);
     for s in 0..c.slots.high_water() as usize {
         if !c.slots.is_alive(s as u32) {
@@ -197,9 +200,10 @@ pub fn step(world: &mut World) {
         let mut vy = c.vy[s] + hs * accel + push_y[s];
         // Drag acts on the velocity along the heading and across it at different rates. A fin
         // grips the water: it adds to the drag across the heading. A shell adds to the drag along
-        // it. At `shell_drag` 0 the sum is `drag_fwd` to the bit, since a shell sum is finite and
-        // `drag_fwd` is under the limit.
-        let keep_fwd = 1.0 - (drag_fwd + shell_drag * c.shell_sum[s]).min(SIDE_DRAG_MAX);
+        // it, up to the size that blocks a whole bite. At `shell_drag` 0 the sum is `drag_fwd` to
+        // the bit, since a shell sum is finite and `drag_fwd` is under the limit.
+        let shell = c.shell_sum[s].min(shell_cap);
+        let keep_fwd = 1.0 - (drag_fwd + shell_drag * shell).min(SIDE_DRAG_MAX);
         let keep_side = 1.0 - (drag_side + fin_grip * c.fin[s]).min(SIDE_DRAG_MAX);
         let fwd = (vx * hc + vy * hs) * keep_fwd;
         let side = (-vx * hs + vy * hc) * keep_side;

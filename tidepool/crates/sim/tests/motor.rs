@@ -2,7 +2,9 @@
 #![allow(clippy::disallowed_methods)]
 
 use tidepool_sim::creature::heft;
-use tidepool_sim::genome::{BrainGenome, Genome, KIND_CHEMO, KIND_CILIA, KIND_FIN, KIND_FLAGELLUM};
+use tidepool_sim::genome::{
+    BrainGenome, Genome, KIND_CHEMO, KIND_CILIA, KIND_FIN, KIND_FLAGELLUM, KIND_SHELL,
+};
 use tidepool_sim::params::id;
 use tidepool_sim::rng::Rng;
 use tidepool_sim::world::{SpawnAt, World};
@@ -296,6 +298,32 @@ fn side_drag_stops_at_its_limit() {
         vx.abs() < 1e-3 && (vy - 0.1).abs() < 1e-3,
         "vx {vx} vy {vy}"
     );
+}
+
+/// The forward speed that a coasting body with this shell keeps after one tick. A shell blocks a
+/// whole bite at a size of 0.5 here.
+fn coast_with_shell(size: f32) -> f32 {
+    let (mut w, s) = solo(|g| g.set_size(KIND_SHELL, size));
+    w.params.set(id::SHELL_BLOCK, 2.0);
+    w.params.set(id::SHELL_DRAG, 0.3);
+    w.creatures.vx[s] = 2.0;
+    drive(&mut w, 0.0, 0.0, 1);
+    w.creatures.vx[s]
+}
+
+#[test]
+fn a_shell_past_a_whole_block_adds_no_drag() {
+    assert_eq!(coast_with_shell(0.5), coast_with_shell(1.0));
+}
+
+#[test]
+fn a_shell_below_a_whole_block_still_adds_drag() {
+    let (bare, small, large) = (
+        coast_with_shell(0.0),
+        coast_with_shell(0.2),
+        coast_with_shell(0.4),
+    );
+    assert!(bare > small && small > large, "{bare} {small} {large}");
 }
 
 #[test]
