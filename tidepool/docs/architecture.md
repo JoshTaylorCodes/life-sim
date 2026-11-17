@@ -315,7 +315,7 @@ Rules:
     range in world units.
   - Creature record: x, y, heading, length, width, hue, energy as a share of capacity, then `uid`,
     slot, flags (lineage 1, possessed 2, juvenile 4, budded 8, born of a cross 16, willing to mate 32,
-    holds a donor 64, bit 128, hurt 256, dash 512, can dash 1024), the brain word `hidden | conns << 16`, then `PART_WORDS` (12) part words in
+    holds a donor 64, bit (its bite took energy) 128, hurt 256, dash 512, can dash 1024), the brain word `hidden | conns << 16`, then `PART_WORDS` (12) part words in
     gene order, then the growth (the share of its full size), the age as a share of its life, and
     the `diet` gene (0 eats only plants, 1 only flesh). The can-dash flag
     (`FLAG_CAN_DASH`) is set when the body declares the dash output, and the page offers the dash

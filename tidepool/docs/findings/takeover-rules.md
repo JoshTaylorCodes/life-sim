@@ -184,18 +184,19 @@ now have some, 5 and 8 (which had them in T3) have none.
 **The target is not met by any trial.** Seeds with carnivores at 0.10 or more: 3 of 5 with both
 rules off (the head, T6), **2 of 35** over the seven trials with a rule on. The rules suppress the
 carnivores. In this world a carnivore is not founded: it evolves late, by a climb from jawed herbivores
-through the middle, and O1 taxes the middle step while I1 taxes the hunt's payoff. Both rules work
+through the omnivores, and O1 taxes that step while I1 taxes the hunt's payoff. Both rules work
 against the end of the ladder they were meant to widen.
 
 **Which seeds keep carnivores is path noise at this sample size.** A change of 0.03 in one param
 moves carnivores from seeds 5 and 8 to seeds 1 and 4 (T3 against T8). Five seeds cannot tell a
 rule's effect from the path it happens to put a seed on, except at the extremes above.
 
-**Why T8.** It was named "the set to ship" before its run, as the token-dose O1 that a rule
-which may not ship off needs. Its rows also make it the only trial with omnivores under 0.50 and
-hunters at or under 0.8 on 5 of 5 seeds (omnivores 0.05 to 0.47, hunter peak 0.10 to 0.79). Its
-carnivores are under 0.10 on every seed, as on every rules-on trial but T3 and T7, which each kept
-them on one seed and broke the hunter band there.
+**Why T8.** It was named "the set to ship" before its run, for one reason: a rule may not ship
+off, so O1 needed its smallest dose with a reading, and I1 kept the one radius (16, T3) that kept a
+hunt. No band picked it. T1, T5 and T8 all have omnivores under 0.50 and hunters at or under 0.8 on
+5 of 5 seeds, and all three do it the same way: with almost no carnivores. T8 is not better than T1
+or T5 on any band; it is the lightest dose of O1. (Corrected 2026-11-17 by the second converge:
+this paragraph first called T8 the only trial to meet those two bands.)
 
 **The shipped set is T8's**: `interference` 0.3 at `interference_radius` 16 (bite reach, the only
 radius that kept the hunt), `jaw_filter_cost` 0.03 (`75d5d3c3`). A rule cannot ship off, and O1
