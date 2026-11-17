@@ -143,6 +143,9 @@ table! {
     /// A scent input weaker than this reads 0, and a stronger one loses this much. A small
     /// chemoreceptor gives weak inputs, so it falls under the floor in scent that a large one reads.
     CHEMO_FLOOR "chemo_floor" 0.1 0.0 1.0;
+    /// The scent level input loses this much, down to 0. A small chemoreceptor on food reads a
+    /// level under it, so a brain weight cannot scale a small receptor's level up.
+    CHEMO_LEVEL_FLOOR "chemo_level_floor" 0.015 0.0 1.0;
     /// Mass of a part per unit size, as a share of body area.
     PART_MASS "part_mass" 1.0 0.0 1.0;
     /// Weight of an eye's size in the part sum.

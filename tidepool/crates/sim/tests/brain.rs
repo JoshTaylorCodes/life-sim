@@ -347,13 +347,18 @@ fn a_body_with_no_chemoreceptor_has_no_scent_input() {
         mark: 0,
     };
     let (x, y) = (w.plants.x[0], w.plants.y[0]);
+    let mut small = with.clone();
+    small.set_size(KIND_CHEMO, 0.1);
     let nosed = w.spawn(with, SpawnAt { x, y, ..at(0.0) }).expect("slot") as usize;
     let noseless = w.spawn(zero, SpawnAt { x, y, ..at(0.0) }).expect("slot") as usize;
+    let tiny = w.spawn(small, SpawnAt { x, y, ..at(0.0) }).expect("slot") as usize;
     w.tick();
     assert!(
         w.brains.inputs_mut(nosed)[N_BODY_IN] > 0.0,
         "no scent at a plant"
     );
+    // A small receptor on the same plant is under the level floor: no weight can lift a 0.
+    assert_eq!(w.brains.inputs_mut(tiny)[N_BODY_IN], 0.0);
     assert_eq!(w.brains.inputs_mut(noseless).len(), 14);
 }
 
@@ -420,12 +425,15 @@ fn a_founder_still_follows_scent_to_food() {
     assert!(wins >= 4, "nose beat no nose on only {wins} of 5 seeds");
 }
 
-/// The three scent inputs of a creature 200 units from a patch of plants, facing it, one tick after
-/// it is born. `floor` is the `chemo_floor` parameter.
-fn scent_inputs(chemo: f32, floor: f32) -> [f32; 3] {
+/// The three scent inputs of a creature at `x` on the axis of a patch of plants at 1000, facing it,
+/// one tick after it is born. With `open` both chemoreceptor floors are 0.
+fn scent_inputs(chemo: f32, x: f32, open: bool) -> [f32; 3] {
     let mut w = World::new(1, 1536.0, 1024.0);
     w.params.set(id::THINK_EVERY, 1.0);
-    w.params.set(id::CHEMO_FLOOR, floor);
+    if open {
+        w.params.set(id::CHEMO_FLOOR, 0.0);
+        w.params.set(id::CHEMO_LEVEL_FLOOR, 0.0);
+    }
     for k in 0..20 {
         let s = w.plants.slots.alloc().expect("plant slot") as usize;
         let (dx, dy) = ((k % 5) as f32 * 6.0 - 12.0, (k / 5) as f32 * 6.0 - 9.0);
@@ -441,7 +449,7 @@ fn scent_inputs(chemo: f32, floor: f32) -> [f32; 3] {
     let mut g = Genome::founder(&mut Rng::new(1), &w.params);
     g.set_size(KIND_CHEMO, chemo);
     let at = SpawnAt {
-        x: 800.0,
+        x,
         y: 500.0,
         heading: 0.0,
         growth: 1.0,
@@ -461,15 +469,33 @@ fn scent_inputs(chemo: f32, floor: f32) -> [f32; 3] {
 /// it reads exactly 0. A brain weight times 0 is 0, so no weight buys the signal back.
 #[test]
 fn a_small_chemoreceptor_reads_a_signal_no_weight_can_amplify() {
-    let large = scent_inputs(1.0, 0.1);
-    let small = scent_inputs(0.1, 0.1);
+    let large = scent_inputs(1.0, 800.0, false);
+    let small = scent_inputs(0.1, 800.0, false);
     assert!(large[1] > 0.5, "large receptor, gradient {}", large[1]);
-    assert_eq!(small[1..], [0.0; 2], "small receptor");
+    assert_eq!(small, [0.0; 3], "small receptor");
 
-    // With the floor at 0 the small receptor reads the same gradient, only weaker: a weight of 10
+    // With the floors at 0 the small receptor reads the same gradient, only weaker: a weight of 10
     // would make it as strong as the large one. The floor is what stops that.
-    let open = scent_inputs(0.1, 0.0);
+    let open = scent_inputs(0.1, 800.0, true);
     assert!(open[1] > 0.05 && open[1] < large[1], "{open:?}");
+}
+
+/// The level input in the middle of a rich patch: a founder-size receptor reads food, and the floor
+/// takes level off a small one. (A small receptor reads 0 on one plant of a grazed world: see
+/// `a_body_with_no_chemoreceptor_has_no_scent_input`.)
+#[test]
+fn the_level_floor_takes_level_off_a_small_chemoreceptor() {
+    let founder = scent_inputs(0.5, 1000.0, false);
+    let small = scent_inputs(0.1, 1000.0, false);
+    let open = scent_inputs(0.1, 1000.0, true);
+    assert!(founder[0] > 0.1, "founder level {}", founder[0]);
+    assert!(small[0] < open[0], "{small:?} against {open:?}");
+}
+
+#[test]
+fn a_founder_size_chemoreceptor_still_reads_a_gradient_at_200_units() {
+    let founder = scent_inputs(0.5, 800.0, false);
+    assert!(founder[1] > 0.0, "founder gradient {}", founder[1]);
 }
 
 #[test]
