@@ -191,6 +191,12 @@ against the end of the ladder they were meant to widen.
 moves carnivores from seeds 5 and 8 to seeds 1 and 4 (T3 against T8). Five seeds cannot tell a
 rule's effect from the path it happens to put a seed on, except at the extremes above.
 
+**Why T8.** It was named "the set to ship" before its run, as the token-dose O1 that a rule
+which may not ship off needs. Its rows also make it the only trial with omnivores under 0.50 and
+hunters at or under 0.8 on 5 of 5 seeds (omnivores 0.05 to 0.47, hunter peak 0.10 to 0.79). Its
+carnivores are under 0.10 on every seed, as on every rules-on trial but T3 and T7, which each kept
+them on one seed and broke the hunter band there.
+
 **The shipped set is T8's**: `interference` 0.3 at `interference_radius` 16 (bite reach, the only
 radius that kept the hunt), `jaw_filter_cost` 0.03 (`75d5d3c3`). A rule cannot ship off, and O1
 cut the carnivores at every dose read, so it ships at a token dose and **its deletion goes to the
