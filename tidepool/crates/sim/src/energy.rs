@@ -1,7 +1,8 @@
 //! Eating, upkeep, growth, and death.
 //!
 //! A filter mouth feeds on every plant the body touches, with no brain output, at
-//! `(1 - diet)^diet_k` of its rate (rule D1 of the diet plan). A full creature
+//! `(1 - diet)^diet_k` of its rate (rule D1 of the diet plan), divided by `1 + jaw_filter_cost *
+//! jaw_sum` (rule O1: a jaw lowers the Filter). A full creature
 //! takes nothing, and no bite takes a plant under its death reserve. Upkeep is paid for mass, for
 //! being a body, for each hidden neuron and each expressed connection of the brain, for thrust, and
 //! for turning. A long `old` gene raises all of it. A juvenile with a reserve builds mass. A
@@ -30,7 +31,7 @@ pub fn contact(world: &mut World) {
     let (per_mass, intake_rate) = (p.get(id::ENERGY_PER_MASS), p.get(id::INTAKE_RATE));
     let (bite_fraction, plant_cap) = (p.get(id::BITE_FRACTION), p.get(id::PLANT_CAP));
     let death_reserve = p.get(id::PLANT_DEATH_RESERVE);
-    let diet_k = p.get(id::DIET_K);
+    let (diet_k, jaw_filter_cost) = (p.get(id::DIET_K), p.get(id::JAW_FILTER_COST));
     let (c, plants, stats) = (&mut world.creatures, &mut world.plants, &mut world.stats);
     let debris = &mut world.debris;
     // With no debris the pass is skipped, so a world without it pays nothing for it.
@@ -44,7 +45,8 @@ pub fn contact(world: &mut World) {
         let mut budget = intake_rate
             * c.filter[s]
             * (c.area(s) / REF_WIDTH)
-            * pow_quarters(1.0 - c.diet[s], diet_k);
+            * pow_quarters(1.0 - c.diet[s], diet_k)
+            / (1.0 + jaw_filter_cost * c.jaw_sum[s]);
         let mut room = per_mass * c.area(s) - c.energy[s];
         let mut energy = c.energy[s];
         // The centre of a plant that the body touches is at most this far away.

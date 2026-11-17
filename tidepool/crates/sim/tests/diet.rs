@@ -137,6 +137,53 @@ fn a_body_at_half_takes_half_to_the_diet_k_of_each_food() {
     assert_eq!(bite_take(1.5, 0.5), bite_take(1.5, 1.0) * share);
 }
 
+/// What a diet 0 body with a Filter of size 0.6 and a Jaw of this size (none for 0) takes from a
+/// plant in one tick, with `jaw_filter_cost` set.
+fn jawed_filter_take(cost: f32, jaw: f32) -> f32 {
+    let mut w = still_water();
+    w.params.set(id::JAW_FILTER_COST, cost);
+    adult_shaped(&mut w, 200.0, 0.0, |g| {
+        g.set_size(KIND_FILTER, 0.6);
+        if jaw > 0.0 {
+            g.set_size(KIND_JAW, jaw);
+        }
+    });
+    let s = w.plants.slots.alloc().expect("plant slot") as usize;
+    (w.plants.x[s], w.plants.y[s]) = (200.0, 256.0);
+    (w.plants.reserve[s], w.plants.cap[s]) = (40.0, 40.0);
+    w.plants.dirty = true;
+    w.tick();
+    w.stats.eaten as f32
+}
+
+#[test]
+fn a_jaw_lowers_the_filter_by_one_over_one_plus_cost_times_its_size() {
+    let bare = jawed_filter_take(2.0, 0.0);
+    assert!(bare > 0.0);
+    // A jaw of 0.5 at a cost of 2: 1 / (1 + 2 * 0.5) = 0.5. A jaw of 1.0: 1 / 3.
+    for (jaw, share) in [(0.5, 0.5), (1.0, 1.0 / 3.0)] {
+        let got = jawed_filter_take(2.0, jaw);
+        assert!(
+            (got - bare * share).abs() < bare * 1e-5,
+            "jaw {jaw}: {got} of {bare}"
+        );
+    }
+}
+
+#[test]
+fn a_body_with_no_jaw_takes_the_same_at_any_jaw_filter_cost() {
+    let bare = jawed_filter_take(0.0, 0.0);
+    assert!(bare > 0.0);
+    assert_eq!(jawed_filter_take(8.0, 0.0), bare);
+}
+
+#[test]
+fn with_jaw_filter_cost_0_a_jaw_takes_the_same_as_none() {
+    let bare = jawed_filter_take(0.0, 0.0);
+    assert_eq!(jawed_filter_take(0.0, 0.5), bare);
+    assert_eq!(jawed_filter_take(0.0, 1.0), bare);
+}
+
 #[test]
 fn founders_start_at_the_founder_diets() {
     let mut w = World::new(3, 1536.0, 1024.0);

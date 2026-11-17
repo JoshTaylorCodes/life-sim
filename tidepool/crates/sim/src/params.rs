@@ -308,6 +308,9 @@ table! {
     /// Rule G1 of the parts plan: a `diet` at most this far from 0 or from 1 pays no gut upkeep. The
     /// bump rises from 0 at the band edge to 1 at `diet` 0.5. Under 0.5 so that the rise has a width.
     GUT_BAND "gut_band" 0.2 0.0 0.45;
+    /// Rule O1, the obligate hunter: a Filter takes `1 / (1 + jaw_filter_cost * jaw_sum)` of its
+    /// rate, where `jaw_sum` is the whole size of the body's jaws. 0: a jaw costs the Filter nothing.
+    JAW_FILTER_COST "jaw_filter_cost" 1.0 0.0 8.0;
 }
 
 /// `diet_k` moves in steps of this, so that `math::pow_quarters` gives its power exactly.
