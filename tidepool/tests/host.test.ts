@@ -592,8 +592,13 @@ test('a death cause that this build does not know is an error, not a silent paus
 
 test('a death by the rules of the core pauses the world, and `speed` resumes it', () => {
   const r = rig({ recycle: true });
-  // A founder dies at the age of its `old` gene, which is the `lifespan` at its founding.
-  r.host.handle({ type: 'init', seed: 1, params: [{ name: 'lifespan', value: 1200 }] });
+  // A founder dies at the age of its `old` gene, which is the `lifespan` at its founding. No body
+  // bites, so no hunter eats the player first.
+  const params = [
+    { name: 'lifespan', value: 1200 },
+    { name: 'bite_rate', value: 0 },
+  ];
+  r.host.handle({ type: 'init', seed: 1, params });
   r.advance(100);
   const f = frameOf(r);
   const pos = (i: number) => {
