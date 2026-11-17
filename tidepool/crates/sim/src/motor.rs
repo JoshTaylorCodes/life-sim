@@ -37,6 +37,11 @@ pub struct Motor {
     /// Of two at one distance, the lower slot. `bite::step` reads them in the same tick.
     pub bite_target: Vec<u32>,
     pub bite_jaws: Vec<f32>,
+    /// Of each live slot, filled on every tick: the steering that this tick's turn used, 0 for a
+    /// body the motor skips. `energy::life` charges for it later in the same tick, so a fin pays
+    /// for the swim that turned it. Not saved: `motor::step` always runs before `life` in a tick
+    /// and fills it for every live slot.
+    pub steered: Vec<f32>,
 }
 
 impl Default for Motor {
@@ -51,6 +56,7 @@ impl Default for Motor {
             heft: vec![0.0; n],
             bite_target: vec![NO_TOUCH; n],
             bite_jaws: vec![0.0; n],
+            steered: vec![0.0; n],
         }
     }
 }
@@ -79,6 +85,7 @@ pub fn step(world: &mut World) {
         heft,
         bite_target,
         bite_jaws,
+        steered,
     } = motor;
     let repel = params.get(id::REPEL);
     let jaw_cos = sin_cos(params.get(id::JAW_ARC)).1;
@@ -165,6 +172,7 @@ pub fn step(world: &mut World) {
         let (width, length) = (c.width(s), c.length(s));
         // Only a snapshot can hold a body with no size. It has no mass to push, so it stays put.
         if !(width > 0.0 && length > 0.0) {
+            steered[s] = 0.0;
             continue;
         }
         let (thrust, turn) = (c.cmd_thrust[s], c.cmd_turn[s]);
@@ -177,7 +185,12 @@ pub fn step(world: &mut World) {
         // A fin steers with the water that passes it, so it does nothing at rest or in reverse.
         // It reads the speed that the body had before this tick: a turn that waits for the new
         // velocity made a tick 5% slower in WASM.
-        let steer = steer(c, s, thrust, [cilia_torque, flag_torque, fin_turn]);
+        let swim = c.vx[s] * hc + c.vy[s] * hs;
+        let steer = cilia_torque * c.cilia[s]
+            + flag_torque * c.flag_push[s] * thrust
+            + flag_torque * c.flag_side[s]
+            + fin_turn * c.fin[s] * swim.max(0.0);
+        steered[s] = steer;
         let a_ang = turn * steer / (ref_inertia * length * heft[s]);
 
         let mut vx = c.vx[s] + hc * accel + push_x[s];
@@ -209,18 +222,6 @@ pub fn step(world: &mut World) {
         c.x[s] = x.clamp(0.0, *w);
         c.y[s] = y.clamp(0.0, *h);
     }
-}
-
-/// The turning that body `s` has at a full command: cilia, a side flagellum, a rear flagellum while
-/// it pushes, and a fin with the water that passes it. `torques` is cilia, flagellum, and fin per
-/// unit of part. `energy::life` charges for it.
-pub fn steer(c: &creature::Creatures, s: usize, thrust: f32, torques: [f32; 3]) -> f32 {
-    let [cilia_torque, flag_torque, fin_turn] = torques;
-    let swim = c.vx[s] * c.hc[s] + c.vy[s] * c.hs[s];
-    cilia_torque * c.cilia[s]
-        + flag_torque * c.flag_push[s] * thrust
-        + flag_torque * c.flag_side[s]
-        + fin_turn * c.fin[s] * swim.max(0.0)
 }
 
 /// Writes nothing: the motor's own state is scratch.
