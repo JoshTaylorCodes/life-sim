@@ -604,6 +604,49 @@ fn an_undeclared_trigger_never_fires() {
     assert!(w.creatures.cd_dash[d] > 0, "the declared dash fires");
 }
 
+/// Finding 8 of the parts audit: the dash pushes along the heading, so only a flagellum that pushes
+/// declares it. A rear flagellum dashes. One at an anchor of 0.5 or less gives no push and no dash.
+#[test]
+fn only_a_forward_push_declares_the_dash() {
+    let open = OutGene {
+        node: Node::body(OUT_DASH),
+        bias: 3.0,
+        alpha: 1.0,
+    };
+    let anchors = [1.0, 0.75, 0.5, 0.25, 0.0];
+    let mut w = still_world();
+    armed(&mut w);
+    let mut slots = Vec::new();
+    for (k, anchor) in anchors.into_iter().enumerate() {
+        let mut g = Genome::default();
+        g.parts
+            .iter_mut()
+            .find(|part| part.kind == KIND_FLAGELLUM)
+            .expect("the founder flagellum")
+            .anchor = anchor;
+        g.brain.outs.push(open.clone());
+        slots.push(put(&mut w, g, 200.0 + 200.0 * k as f32, 500.0, 0.0));
+    }
+    for _ in 0..10 {
+        w.tick();
+    }
+    for (s, anchor) in slots.into_iter().zip(anchors) {
+        let pushes = anchor > 0.5;
+        assert_eq!(
+            w.brains.output(s, OUT_DASH) != UNDECLARED,
+            pushes,
+            "anchor {anchor}"
+        );
+        assert_eq!(w.creatures.cd_dash[s] > 0, pushes, "anchor {anchor}");
+        let declared = brain::ports(&w.genomes[s]).outputs;
+        assert_eq!(
+            declared.contains(&Node::body(OUT_DASH)),
+            pushes,
+            "anchor {anchor}"
+        );
+    }
+}
+
 #[test]
 fn a_founder_trigger_rests_closed() {
     let mut w = still_world();

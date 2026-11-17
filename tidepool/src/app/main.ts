@@ -664,7 +664,7 @@ function start(): void {
             if (courting) courtedAt = performance.now();
           }
           if (you) donor = { uid: you.uid, holds };
-          carries = you ? abilitiesOf(you.parts) : 0;
+          carries = you ? abilitiesOf(you.parts, you.flags) : 0;
           firing = you !== null && (you.flags & FLAG_DASH) !== 0;
           showAbilities();
           // In a world where mixing is off a court can do nothing, and the card does not show.

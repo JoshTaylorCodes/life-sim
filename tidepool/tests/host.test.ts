@@ -618,13 +618,16 @@ test('a death by the rules of the core pauses the world, and `speed` resumes it'
 
 // The rules decide this test, not the path of one seed. Every founder buds on its first tick, lives
 // 1,200 ticks, and pays no upkeep. So the body buds marked children at once, nothing starves, and the
-// body dies of old age while children that are younger than it are alive.
+// body dies of old age while children that are younger than it are alive. Bites are off: a rule that
+// changed the brains (#1684, the dash output) moved the seed path, and the body was eaten before
+// tick 580.
 test('picking an heir resumes the world in that body', () => {
   const r = rig({ recycle: true });
   const params = [
     { name: 'bud_at', value: 0.2 },
     { name: 'bud_cooldown', value: 0 },
     { name: 'lifespan', value: 1200 },
+    { name: 'bite_rate', value: 0 },
     ...['basal', 'fixed_upkeep', 'neuron_upkeep', 'conn_upkeep', 'move_cost', 'turn_cost'].map(
       (name) => ({
         name,
