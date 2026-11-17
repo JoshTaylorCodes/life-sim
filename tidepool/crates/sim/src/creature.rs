@@ -381,24 +381,27 @@ impl Creatures {
     }
 
     /// The shell size that a body's drag counts. A shell side that faces within the arc of the line
-    /// of the heading (`arc_cos2` is its squared cosine) shares one bite with the others there, so
-    /// together they count to `cap`, the size that blocks a whole bite. Any other side holds a bite
-    /// alone, so each counts to `cap`: a split pair keeps its drag until its best side blocks a
-    /// whole bite.
+    /// of the heading (`arc_cos2` is its squared cosine) shares one bite with the others at that
+    /// end, so together they count to `cap`, the size that blocks a whole bite. A biter is at one
+    /// end, so the nose and the tail count each to `cap`. Any other side holds a bite alone, so
+    /// each counts to `cap`: a split pair keeps its drag until its best side blocks a whole bite.
     pub fn shell_drag_size(&self, s: usize, arc_cos2: f32, cap: f32) -> f32 {
-        let (mut ahead, mut aside) = (0.0, 0.0);
+        let (mut fore, mut aft, mut aside) = (0.0, 0.0, 0.0);
         let first = s * MAX_GUARDS;
         for k in first..first + (self.n_guards[s] as usize).min(MAX_GUARDS) {
             if self.guard_kind[k] != KIND_SHELL {
                 continue;
             }
-            if self.guard_ax[k] * self.guard_ax[k] >= arc_cos2 {
-                ahead += self.guard_size[k];
+            let (ax, size) = (self.guard_ax[k], self.guard_size[k]);
+            if ax * ax < arc_cos2 {
+                aside += size.min(cap);
+            } else if ax > 0.0 {
+                fore += size;
             } else {
-                aside += self.guard_size[k].min(cap);
+                aft += size;
             }
         }
-        ahead.min(cap) + aside
+        fore.min(cap) + aft.min(cap) + aside
     }
 
     /// The part sizes as the upkeep and the mass count them: an eye's size is times `eye_cost`.

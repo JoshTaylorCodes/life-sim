@@ -55,10 +55,14 @@ fn still_water() -> World {
 
 /// The reference founder at rest at `x`, heading along x, with an empty brain and the part added.
 fn adult(w: &mut World, x: f32, part: Option<PartGene>) -> usize {
+    adult_with(w, x, part.into_iter().collect())
+}
+
+fn adult_with(w: &mut World, x: f32, parts: Vec<PartGene>) -> usize {
     let mut g = Genome::founder(&mut Rng::new(1), &w.params);
     (g.len, g.wid) = (12.0, 0.5);
     g.brain = BrainGenome::default();
-    g.parts.extend(part);
+    g.parts.extend(parts);
     let at = SpawnAt {
         x,
         y: 256.0,
@@ -196,10 +200,19 @@ fn each_eye_of_a_pair_sees_half_as_far_as_one_midline_eye_of_the_same_size() {
 /// The drag that one shell gene puts on a body coasting along its heading for one tick, at
 /// `shell_block` 2: a side blocks a whole bite at the side size 0.5.
 fn shell_drag(anchor: f32, size: f32) -> f32 {
+    shells_drag(&[(anchor, size)])
+}
+
+/// The same for a body with a shell gene at each of the `(anchor, size)`.
+fn shells_drag(shells: &[(f32, f32)]) -> f32 {
     let mut w = still_water();
     w.params.set(id::SHELL_BLOCK, 2.0);
     w.params.set(id::SHELL_DRAG, 0.1);
-    let s = adult(&mut w, 100.0, Some(gene(KIND_SHELL, anchor, size)));
+    let parts = shells
+        .iter()
+        .map(|&(anchor, size)| gene(KIND_SHELL, anchor, size))
+        .collect();
+    let s = adult_with(&mut w, 100.0, parts);
     w.creatures.vx[s] = 1.0;
     w.run(1);
     1.0 - w.creatures.vx[s]
@@ -232,6 +245,16 @@ fn a_midline_shell_and_a_pair_that_holds_one_direction_stop_at_the_size_that_blo
         assert!(before < at - 1e-3, "{anchor}: {before} {at}");
         assert!(close(at, past), "{anchor}: {at} {past}");
     }
+}
+
+#[test]
+fn a_full_shell_at_the_nose_and_one_at_the_tail_drag_as_two_whole_blocks() {
+    // A biter is at one end, so the two shells never share a bite: each blocks a whole bite alone.
+    let bare = shells_drag(&[]);
+    let one = shells_drag(&[(0.0, 0.5)]) - bare;
+    let both = shells_drag(&[(0.0, 0.5), (1.0, 0.5)]) - bare;
+    assert!(one > 1e-3, "{one}");
+    assert!(close(both, 2.0 * one), "{one} {both}");
 }
 
 #[test]
