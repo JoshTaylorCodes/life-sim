@@ -300,7 +300,7 @@ table! {
     /// hunters near cut a bite about in half. 0: off.
     INTERFERENCE "interference" 0.3 0.0 2.0;
     /// Rule I1: the distance, centre to centre, inside which a body with a jaw counts.
-    INTERFERENCE_RADIUS "interference_radius" 48.0 0.0 128.0;
+    INTERFERENCE_RADIUS "interference_radius" 16.0 0.0 128.0;
     /// Rule G1 of the parts plan, two guts cost upkeep: a body pays this fraction of its own basal
     /// cost, times a bump of its `diet` (see `gut_band`), for keeping two digestive systems. At 0.5
     /// of `diet` the bump is 1. 0: off.
@@ -310,7 +310,7 @@ table! {
     GUT_BAND "gut_band" 0.2 0.0 0.45;
     /// Rule O1, the obligate hunter: a Filter takes `1 / (1 + jaw_filter_cost * jaw_sum)` of its
     /// rate, where `jaw_sum` is the whole size of the body's jaws. 0: a jaw costs the Filter nothing.
-    JAW_FILTER_COST "jaw_filter_cost" 1.0 0.0 8.0;
+    JAW_FILTER_COST "jaw_filter_cost" 0.03 0.0 8.0;
 }
 
 /// `diet_k` moves in steps of this, so that `math::pow_quarters` gives its power exactly.
