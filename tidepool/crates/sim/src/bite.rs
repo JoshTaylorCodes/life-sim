@@ -33,7 +33,9 @@ pub(crate) fn side(y: f32) -> f32 {
 /// Each live slot `s` in ascending order with a body `j` in a jaw cone, as the motor found it on
 /// this tick, bites `j` unless either is at 0 energy or less, `s` is lighter than
 /// `bite_mass_ratio` times `j`, the `diet` of `j` is not at least `bite_diet_gap` under that of `s`
-/// (rule D2 of the diet retune), or `s` is full. The bite is `bite_rate` times the jaws that hold
+/// (rule D2 of the diet retune), or `s` is full. At the top of the chain the mass ratio alone
+/// guards: if the diet of `s` plus the gap is over 1, `s` also bites a `j` of a diet over 1 minus
+/// the gap. The bite is `bite_rate` times the jaws that hold
 /// `j` times the mouth of `s` times `diet^diet_k` of `s` (rule D1 of the diet plan), and
 /// `strike_bite` times that during a strike. A spike hurts in proportion to that bite. The guards of `j` whose
 /// arc holds `s`, at the places of this tick after the motor, block a share of it (shells) and
@@ -69,7 +71,10 @@ pub fn step(world: &mut World) {
         if c.energy[s] <= 0.0 || c.energy[j] <= 0.0 {
             continue;
         }
-        if motor.mass[s] < ratio * motor.mass[j] || c.diet[s] - c.diet[j] < diet_gap {
+        // At the top of the chain the gap would leave a body over `1 - gap` immune, so a biter
+        // whose diet plus the gap is over 1 may bite any body at or over `1 - gap` too.
+        let top = c.diet[s] + diet_gap > 1.0 && c.diet[j] >= 1.0 - diet_gap;
+        if motor.mass[s] < ratio * motor.mass[j] || (c.diet[s] - c.diet[j] < diet_gap && !top) {
             continue;
         }
         let area = c.area(s);
