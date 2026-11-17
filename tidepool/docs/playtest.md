@@ -89,7 +89,7 @@ An agent cannot answer these questions. An agent can only make sure that each st
 
 8. **Do:** Press Esc. In Watch, zoom in on a crowd and wait. If you see no bite in 2 minutes, open `/?world=m2-world-long.tdpl`.
    **Look:** The jaw shuts on a bite. The bitten creature flashes red. A kill leaves a dull fleck of debris.
-   **Answer:** Can you see who bit whom? Many creatures carry jaws, also plant eaters. Does a jaw tell you who hunts?
+   **Answer:** Can you see who bit whom? Many creatures carry jaws, also herbivores. Does a jaw tell you who hunts?
 
 9. **Do:** Click a small creature next to a bigger one with a jaw. Make sure a Dash button shows, or pick another. Keep your hands off for 1 minute. If it lives, press Space.
    **Look:** The energy ring flashes on the side of each hit. The Dash button counts down after a dash.

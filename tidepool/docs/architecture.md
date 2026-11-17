@@ -143,8 +143,10 @@ native binary is dropped. M0 answers this.
 - The part list has at most `MAX_PART_GENES` (12) genes, in gene order. A part gene holds a kind, an
   `anchor`, a `size`, an `extra`, and a history id. The kinds are Flagellum, Cilia, Filter,
   Chemoreceptor, Fin, and Eye, numbered 1 to 6. The anchor runs from 0 at the nose to 1 at the tail.
-  An anchor of exactly 0 or 1 is on the midline and makes one part. Any other value makes a mirrored
-  pair, and the size counts once. Each eye cone, jaw cone, and guard of a pair has half of the size.
+  An anchor on the midline makes one part, at the nose or the tail. Any other value makes a mirrored
+  pair, and the size counts once. The midline is an anchor that the frame packs to the byte 0 or 255,
+  which is less than half a byte step (1/510) from 0 or 1, and an anchor that is not finite
+  (`is_pair`), so the page and the core agree on which parts are pairs. Each eye cone, jaw cone, and guard of a pair has half of the size.
   Sizes run from 0 to 1. A Filter of size 0 eats nothing, weighs nothing, and is not drawn. Only an Eye
   reads `extra`, which sets the width of its cone.
 - Only two kinds use their place. A Flagellum splits its size into push, by `push_of(anchor)`, and
@@ -177,12 +179,32 @@ native binary is dropped. M0 answers this.
   (`motor.rs`).
 - An Eye makes one cone on the midline and two elsewhere, at most `MAX_EYES` (8) cones on a body.
   Genes past that still cost their size. The half angle is `EYE_HALF_MIN + EYE_HALF_SPAN * extra`.
-  The range is `eye_range * size * length * (1 + eye_trade * (0.7 - half angle))`, held to
-  `EYE_REACH` (64): a wide cone sees nearer than a narrow one, and a cone of the founder's half
-  angle 0.7 keeps `eye_range * size * length`. Each cone feeds two inputs of
+  The range is `eye_range * size * length * (1 + eye_trade * (founder half angle - half angle))`,
+  held to `EYE_REACH` (64): a wide cone sees nearer than a narrow one, and a cone of the founder's
+  half angle keeps `eye_range * size * length`. The founder half angle is
+  `EYE_HALF_MIN + EYE_HALF_SPAN * FOUNDER_EYE_EXTRA`, derived in `Creatures::cone_range`, so a new
+  `FOUNDER_EYE_EXTRA` moves it (0.7 today). Each cone feeds two inputs of
   its own eye gene: the nearness of the nearest plant and of the nearest body in the cone, 1 at the
   eye and 0 at the range, times `eye_gain`. Nothing is summed over cones. A body scans on one think in
   `see_every` (`eye.rs`).
+- Rules of the parts batch, each a row of the parameter table:
+  - Turn cost: a body pays `turn_cost * turn^2 * steering * area / REF_WIDTH`, as it pays for thrust
+    (`energy.rs`). The steering is what `motor::step` used that tick (`Motor::steered`).
+  - Chemoreceptor floors: the scent gradient of a body loses `chemo_floor` from its length, with the
+    direction kept, and the level input loses `chemo_level_floor`, both down to 0. A small receptor
+    in weak scent reads exactly 0, and no brain weight scales it back (`sense.rs`).
+  - Interference (I1): a bite is divided by `1 + interference * n`, where `n` counts the other jawed
+    bodies, not the bitten one, within `interference_radius` of the biter (`bite.rs`).
+  - The jaw's Filter cost (O1): a Filter takes `1 / (1 + jaw_filter_cost * jaw_sum)` of its rate
+    (`energy.rs`). A Filter can be size 0, so a body can shed it.
+  - Top of the chain: a biter whose `diet` plus `bite_diet_gap` is over 1 also bites a body whose
+    `diet` is at least `1 - bite_diet_gap`, so no diet is immune to every bite (`bite.rs`).
+  - A spike hurts the biter by what the bite took, so a bite that a shell blocked whole costs the
+    biter nothing to a spike. The drag of a shell counts only to the size that blocks a whole bite
+    (`Creatures::shell_drag_size`).
+  - An ability costs by its part: `dash_cost` per unit of pushing flagellum and `toxin_cost` per unit
+    of gland, not by area. Only a flagellum that pushes along the heading declares the dash output
+    (`Genome::push_sum`).
 
 ### 5.5 Brains
 
@@ -224,7 +246,7 @@ Parameters are part of the snapshot.
 
 A little-endian byte buffer: magic `TDPL`, format version, payload length, payload, CRC32 of the payload.
 `World::save` and `World::load`. A load of bad data returns an error and never a half-built world. The format version
-rises on any layout change. It is 8 at the head of M3. A genome with more than `MAX_PART_GENES`
+rises on any layout change. It is 19 at the head of the ship slice. A genome with more than `MAX_PART_GENES`
 parts or a kind outside 1 to 6 is a load error. M5 adds migration, last-good backup, and export.
 
 ## 6. ABI
@@ -233,7 +255,7 @@ The core exports plain functions prefixed `tp_`. The worker reads buffers throug
 WASM memory and must re-create its views after any call that can grow memory. Layout constants (frame
 strides, header size, the brain readout) are exported as functions. A test fails if `protocol.ts`
 disagrees with them. `tp_brain_write(uid)` writes the readout of one living brain: a header, six
-words per neuron, three per connection. The ABI version is 6 at the head of M3.
+words per neuron, three per connection. The ABI version is 11 at the head of the ship slice.
 
 `tp_abi_version()` rises on any change to an export's meaning. The worker refuses a module whose version
 it does not know, and the page shows the error.
@@ -293,9 +315,11 @@ Rules:
     range in world units.
   - Creature record: x, y, heading, length, width, hue, energy as a share of capacity, then `uid`,
     slot, flags (lineage 1, possessed 2, juvenile 4, budded 8, born of a cross 16, willing to mate 32,
-    holds a donor 64), the brain word `hidden | conns << 16`, then `PART_WORDS` (12) part words in
+    holds a donor 64, bit 128, hurt 256, dash 512, can dash 1024), the brain word `hidden | conns << 16`, then `PART_WORDS` (12) part words in
     gene order, then the growth (the share of its full size), the age as a share of its life, and
-    the `diet` gene (0 eats only plants, 1 only flesh). A
+    the `diet` gene (0 eats only plants, 1 only flesh). The can-dash flag
+    (`FLAG_CAN_DASH`) is set when the body declares the dash output, and the page offers the dash
+    only to a body that has it. A
     part word is `kind | anchor << 8 | size << 16 | extra << 24`, each of the three values scaled
     from 0 to 1 onto a byte. A place with no part is 0. The grown length over the growth is the
     length gene.
