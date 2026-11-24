@@ -6,6 +6,11 @@
   toolchain, and pnpm root. For Tidepool work, read `tidepool/AGENTS.md` and work from `tidepool/`.
 - **`src/`** is the first draft. Keep it working. Do not extend it unless asked.
 
+## Prove and land
+
+- Verify skill (Tidepool only): `.claude/skills/verify-tidepool/SKILL.md`.
+- Constitution: `tidepool/docs/agents/CONSTITUTION.md` (Tidepool). The draft in `src/` has none.
+
 ## Issue tracking
 
 Work is tracked in JTBug (`$BUG_URL`). Tidepool is group `tidepool`. The draft's backlog is group `lifesim-draft`: the Beads issues imported on 2026-10-29 as #816 to #1154. Each one carries a `beads:<old-id>` tag, so an old ID in a plan (`life-sim-tmvb`) is found with `bug_list` and the quoted phrase `q: '"beads:life-sim-tmvb"'` (quotes match exactly, bare words fuzzily). The MCP server is in `.mcp.json` (actor `claude-tidepool`). Commands: `tidepool/docs/agents/issue-tracker.md`.
