@@ -3,3 +3,4 @@ dist/
 target/
 src/wasm/
 public/*.tdpl
+verify-evidence/

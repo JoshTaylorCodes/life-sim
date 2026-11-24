@@ -342,6 +342,10 @@ function start(): void {
         }
         send({ type: 'param', index: param.index, value });
       },
+      // 0 holds the world still. The verify skill steps it to exact ticks for its frame strips.
+      setSpeed(ticksPerSecond: number): void {
+        send({ type: 'speed', ticksPerSecond });
+      },
     };
     Object.assign(window, { __tidepool: handle });
   }
