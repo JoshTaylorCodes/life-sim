@@ -153,6 +153,16 @@ function median(values: number[]): number | null {
   return a === undefined || b === undefined ? null : (a + b) / 2;
 }
 
+// The element under the wheel, or one around it, is the guide or a panel that has more to scroll.
+function ownsWheel(target: EventTarget | null): boolean {
+  for (let el = target instanceof Element ? target : null; el; el = el.parentElement) {
+    if (el.tagName === 'DIALOG') return true;
+    const y = getComputedStyle(el).overflowY;
+    if (el.scrollHeight > el.clientHeight && (y === 'auto' || y === 'scroll')) return true;
+  }
+  return false;
+}
+
 /**
  * All pointer and wheel input on the canvas. It turns the events into gestures and knows nothing
  * of the camera. Positions are CSS pixels of the window: the canvas fills it.
@@ -206,9 +216,12 @@ function bindPointer(canvas: HTMLCanvasElement, on: PointerHandlers): void {
     down.delete(e.pointerId);
     hold();
   });
-  canvas.addEventListener(
+  // The wheel listens on the window: over a button of the overlay it zooms too. After `Leave` the
+  // `Guide` button slides under the pointer. A panel that can scroll and the guide keep the wheel.
+  window.addEventListener(
     'wheel',
     (e) => {
+      if (ownsWheel(e.target)) return;
       e.preventDefault(); // the browser does not zoom the page
       on.zoom(
         e.clientX,

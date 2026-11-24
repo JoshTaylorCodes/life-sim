@@ -27,10 +27,11 @@ A click on a body in Watch possesses it. The camera follows it at `PLAY_SCALE`. 
   };
   ```
   `window.__tidepool.brainDriving` is false after the press, and the body turned left between the frames.
-- **Leave.** In an act: `page.getByRole('button', { name: /Leave/ }).click()`, then `window.__tidepool.mode === 'watch'`.
+- **Leave.** `strip <url> $E/leave --play --frames 1 --act .claude/skills/verify-tidepool/acts/leave-wheel.mjs`. The act clicks `Leave`, waits for `mode === 'watch'`, and turns the wheel without moving the pointer. It throws when the scale does not change within 500 ms.
 - **Phone.** Repeat with `--size 390x844`. Check that the counter, the cards, the hint, and the buttons do not cover each other.
 
 ## Gotchas
 
 - Bodies overlap each other in the sim. An overlap of two bodies is not a draw-order defect by itself. A body that flickers over and under another between frames is.
 - The mate card and the bud card stand where each other would. Only one shows.
+- When `Leave` goes, the `Guide` button slides under the pointer. The wheel there zoomed nothing until the wheel listener moved from the canvas to the window. A wheel over the guide or over a panel that has more to scroll still does not zoom.
