@@ -23,9 +23,10 @@ The previous handoff (mid-M4) is at `git show 9a0b25a:HANDOFF.md`.
   stop): with the bite on, hunters take over by 144,000 at every value tried; the mass ratio sets
   the pace and ran out of its range at 3.0, the shipped default. Untried levers and the rule the
   draft named are in `m4-exit.md` "Open problems".
-- The saved worlds (gitignored) are rebaked at the final defaults: `m2-world.tdpl` (36,000 ticks,
-  1,713 bodies, hunters a fifth to a half, prey everywhere: **the one to play**) and
-  `m2-world-long.tdpl` (144,000, 631 large hunters).
+- The saved worlds (gitignored) were last rebaked at `f3444255`, snapshot format 19
+  (`tidepool/docs/findings/takeover-rules.md`, "Superseded after #1707"): `m2-world.tdpl` (36,000
+  ticks, 1,680 creatures, hash `63f77c89`: **the one to play**) and `m2-world-long.tdpl` (144,000,
+  1,631 creatures, hash `584bbbaa`).
 - Provisional, owner to confirm (`docs/decisions/INDEX.md`, 2026-10-16): `fin_grip` 0.6, the
   12,000-tick and 144,000-tick predation bands, a mutant trigger resting closed, the shipped set.
 - Owner checks: M4's six in `m4-exit.md` and M3's nine in `m3-exit.md`. An agent never closes them.
@@ -59,14 +60,16 @@ The previous handoff (mid-M4) is at `git show 9a0b25a:HANDOFF.md`.
   and `make fmt`, limits the files. A subagent cannot write a findings `.md`. Read the rows, not the
   commit message.
 - Leftover agent browser tabs run the sim and load the machine: close them before a bench.
-- `bd` does not start in this repo. Open problems live in the findings files.
-- Two reference worktrees: `../life-sim-ref` (`7b8c74f`, the M4 bench reference) and `../life-sim-ab`
-  (`cfd5386`, before the diet gene). At load 3 both the head and `cfd5386` read about 278 ns per
-  creature-tick, on the floor (277.8): the floor is tight on this machine, not the new rules.
+- Work is tracked in JTBug, group `tidepool` (`AGENTS.md`, `tidepool/docs/agents/issue-tracker.md`).
+  Beads is retired.
+- The reference worktrees `../life-sim-ref` and `../life-sim-ab` are gone. The M4 bench reference
+  is `7b8c74f`. `cfd5386` (before the diet gene) no longer resolves in this repo: the parent of the diet gene (`2e4bdb61`) is `5ac9a659`. At load 3 both the head and
+  `cfd5386` read about 278 ns per creature-tick, on the floor (277.8): the floor is tight on this
+  machine, not the new rules.
 - The machine runs `llama-server` processes and other projects' tests: check `uptime` and `ps` before
   any bench; at a load over 5 a reading is not a reading.
-- Snapshot format 12, ABI 10. The saved worlds (gitignored) are rebaked at the shipped set
-  (`25e4cb9c`, `32d69391`).
+- Snapshot format 19 (`tidepool/crates/sim/src/snapshot.rs`), ABI 11 (`tidepool/crates/sim/src/abi.rs`,
+  `tidepool/src/protocol.ts`). The rebake record is in `tidepool/docs/findings/takeover-rules.md`.
 
 ## Key files
 
