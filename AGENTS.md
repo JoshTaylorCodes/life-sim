@@ -9,7 +9,10 @@
 ## Prove and land
 
 - Verify skill (Tidepool only): `.claude/skills/verify-tidepool/SKILL.md`.
-- Constitution: `tidepool/docs/agents/CONSTITUTION.md` (Tidepool). The draft in `src/` has none.
+- The constitution is Tidepool's. The draft in `src/` has none.
+
+Converge fixed point: ship-slice
+Constitution: tidepool/docs/agents/CONSTITUTION.md
 
 ## Issue tracking
 
